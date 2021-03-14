@@ -138,8 +138,8 @@ $app->post('/projects/lists', function (Request $req, Response $res) use($conn) 
 
 $app->put('/projects', function (Request $req, Response $res) use($conn) {
     $post = $req->getParsedBody();
-    $stmt = $conn->prepare("INSERT into projects (client_id, name, status, hosting, github_url, lists) VALUES (?, ?, ?, ?, ?, ?)");
-    $stmt->bind_param("isssss", $post["client_id"], $post["name"], $post["status"], $post["hosting"], $post["github_url"], $post["lists"]);
+    $stmt = $conn->prepare("INSERT into projects (client_id, name, status, hosting, github_url) VALUES (?, ?, ?, ?, ?)");
+    $stmt->bind_param("issss", $post["client_id"], $post["name"], $post["status"], $post["hosting"], $post["github_url"]);
     $stmt->execute();
     $stmt->close();
 
