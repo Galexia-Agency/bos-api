@@ -127,6 +127,15 @@ $app->get('/', function (Request $req, Response $res, array $args) use($conn) {
     return $res->withJson($response);
 });
 
+$app->post('/projects', function (Request $req, Response $res) use($conn) {
+    $post = $req->getParsedBody();
+    $stmt = $conn->prepare("UPDATE projects SET name = ?, status = ?, hosting = ?, github_url = ? WHERE id = ?");
+    $stmt->bind_param("ssssi", $post["name"], $post["status"], $post["hosting"], $post["github_url"], $post["id"]);
+    $stmt->execute();
+    $stmt->close();
+    return $res->withJson('Updated successfuly.');
+});
+
 $app->post('/projects/lists', function (Request $req, Response $res) use($conn) {
     $post = $req->getParsedBody();
     $stmt = $conn->prepare("UPDATE projects SET lists = ? WHERE id = ?");
