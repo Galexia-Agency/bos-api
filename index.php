@@ -127,6 +127,8 @@ $app->get('/', function (Request $req, Response $res, array $args) use($conn) {
     return $res->withJson($response);
 });
 
+/* PROJECTS */
+
 $app->post('/projects', function (Request $req, Response $res) use($conn) {
     $post = $req->getParsedBody();
     $stmt = $conn->prepare("UPDATE projects SET name = ?, status = ?, hosting = ?, github_url = ? WHERE id = ?");
@@ -169,4 +171,83 @@ $app->put('/projects', function (Request $req, Response $res) use($conn) {
     return $res->withJson($projects);
 });
 
+/* CLIENTS */
+
+$app->put('/clients', function (Request $req, Response $res) use($conn) {
+    $post = $req->getParsedBody();
+    $stmt = $conn->prepare("INSERT into clients (business_name, business_shortname, address) VALUES (?, ?, ?)");
+    $stmt->bind_param("sss", $post["business_name"], $post["business_shortname"], $post["address"]);
+    $stmt->execute();
+    $stmt->close();
+
+    $stmt = $conn->prepare("SELECT * FROM clients");
+    $stmt->execute();
+    $result = $stmt->get_result();
+    $clients = array();
+    while($row = $result->fetch_assoc()) {
+        if($row) {
+            $clients[] = $row;
+        }
+        else {
+            return $res->withJson(null);
+        }
+    };
+    $stmt->close();
+
+    return $res->withJson($clients);
+});
+
+$app->post('/clients', function (Request $req, Response $res) use($conn) {
+    $post = $req->getParsedBody();
+    $stmt = $conn->prepare("UPDATE clients SET business_name = ?, business_shortname = ?, address = ? WHERE id = ?");
+    $stmt->bind_param("sssi", $post["business_name"], $post["business_shortname"], $post["address"], $post["id"]);
+    $stmt->execute();
+    $stmt->close();
+    return $res->withJson('Updated successfuly.');
+});
+
+/* CONTACTS */
+
+$app->put('/contacts', function (Request $req, Response $res) use($conn) {
+    $post = $req->getParsedBody();
+    $stmt = $conn->prepare("INSERT into contacts (client_id, f_name, l_name, tel, email, role, facebook) VALUES (?, ?, ?, ?, ?, ?, ?)");
+    $stmt->bind_param("issssss", $post["client_id"], $post["f_name"], $post["l_name"], $post["tel"], $post["email"], $post["role"], $post["facebook"]);
+    $stmt->execute();
+    $stmt->close();
+
+    $stmt = $conn->prepare("SELECT * FROM clients");
+    $stmt->execute();
+    $result = $stmt->get_result();
+    $contacts = array();
+    while($row = $result->fetch_assoc()) {
+        if($row) {
+            $contacts[] = $row;
+        }
+        else {
+            return $res->withJson(null);
+        }
+    };
+    $stmt->close();
+
+    return $res->withJson($contacts);
+});
+
+$app->post('/contacts', function (Request $req, Response $res) use($conn) {
+    $post = $req->getParsedBody();
+    $stmt = $conn->prepare("UPDATE contacts SET f_name = ?, l_name = ?, tel = ?, email = ?, role = ?, facebook = ? WHERE id = ?");
+    $stmt->bind_param("ssssssi", $post["f_name"], $post["l_name"], $post["tel"], $post["email"], $post["role"], $post["facebook"], $post["id"]);
+    $stmt->execute();
+    $stmt->close();
+    return $res->withJson('Updated successfuly.');
+});
+/*
+$app->delete('/contacts', function (Request $req, Response $res) use($conn) {
+    $post = $req->getParsedBody();
+    $stmt = $conn->prepare("UPDATE contacts SET f_name = ?, l_name = ?, tel = ?, email = ?, role = ?, facebook = ? WHERE id = ?");
+    $stmt->bind_param("ssssssi", $post["f_name"], $post["l_name"], $post["tel"], $post["email"], $post["role"], $post["facebook"], $post["id"]);
+    $stmt->execute();
+    $stmt->close();
+    return $res->withJson('Updated successfuly.');
+});
+*/
 $app->run();
