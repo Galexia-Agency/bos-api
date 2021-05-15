@@ -170,23 +170,6 @@ $app->put('/projects', function (Request $req, Response $res) use($conn) {
 
     return $res->withJson($projects);
 });
-$app->get('/contacts', function (Request $req, Response $res, array $args) use($conn) {
-    $stmt = $conn->prepare("SELECT * FROM contacts");
-    $stmt->execute();
-    $result = $stmt->get_result();
-    $contacts = array();
-    while($row = $result->fetch_assoc()) {
-        if($row) {
-            $contacts[] = $row;
-        }
-        else {
-            return $res->withJson(null);
-        }
-    };
-    $stmt->close();
-
-    return $res->withJson($contacts);
-});
 
 /* CLIENTS */
 
@@ -224,6 +207,24 @@ $app->post('/clients', function (Request $req, Response $res) use($conn) {
 });
 
 /* CONTACTS */
+
+$app->get('/contacts', function (Request $req, Response $res, array $args) use($conn) {
+    $stmt = $conn->prepare("SELECT * FROM contacts");
+    $stmt->execute();
+    $result = $stmt->get_result();
+    $contacts = array();
+    while($row = $result->fetch_assoc()) {
+        if($row) {
+            $contacts[] = $row;
+        }
+        else {
+            return $res->withJson(null);
+        }
+    };
+    $stmt->close();
+
+    return $res->withJson($contacts);
+});
 
 $app->put('/contacts', function (Request $req, Response $res) use($conn) {
     $post = $req->getParsedBody();
