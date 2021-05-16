@@ -9,6 +9,8 @@ header("Content-Security-Policy: default-src 'self'");
 header("Referrer-Policy: no-referrer");
 header("X-Content-Type-Options: nosniff");
 
+date_default_timezone_set('UTC');
+
 require_once __DIR__ . '/vendor/autoload.php';
 
 $dotenv = Dotenv\Dotenv::createImmutable(__DIR__);
@@ -223,13 +225,17 @@ $app->get('/contacts', function (Request $req, Response $res, array $args) use($
     };
     $stmt->close();
 
-    return $res->withJson($contacts);
+    $result = usort($contacts, function ($a, $b) {
+        return $a['updated_at'] <=> $b['updated_at'];
+    });
+
+    return $res->withJson($result);
 });
 
 $app->put('/contacts', function (Request $req, Response $res) use($conn) {
     $post = $req->getParsedBody();
-    $stmt = $conn->prepare("INSERT into contacts (client_id, f_name, l_name, tel, email, role, facebook) VALUES (?, ?, ?, ?, ?, ?, ?)");
-    $stmt->bind_param("issssss", $post["client_id"], $post["f_name"], $post["l_name"], $post["tel"], $post["email"], $post["role"], $post["facebook"]);
+    $stmt = $conn->prepare("INSERT into contacts (client_id, f_name, l_name, tel, email, role, facebook, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)");
+    $stmt->bind_param("issssssss", $post["client_id"], $post["f_name"], $post["l_name"], $post["tel"], $post["email"], $post["role"], $post["facebook"], date("Y-m-d H:i:s"), date("Y-m-d H:i:s"));
     $stmt->execute();
     $stmt->close();
 
@@ -252,20 +258,11 @@ $app->put('/contacts', function (Request $req, Response $res) use($conn) {
 
 $app->post('/contacts', function (Request $req, Response $res) use($conn) {
     $post = $req->getParsedBody();
-    $stmt = $conn->prepare("UPDATE contacts SET f_name = ?, l_name = ?, tel = ?, email = ?, role = ?, facebook = ? WHERE id = ?");
-    $stmt->bind_param("ssssssi", $post["f_name"], $post["l_name"], $post["tel"], $post["email"], $post["role"], $post["facebook"], $post["id"]);
+    $stmt = $conn->prepare("UPDATE contacts SET f_name = ?, l_name = ?, tel = ?, email = ?, role = ?, facebook = ?, updated_at WHERE id = ?");
+    $stmt->bind_param("ssssssis", $post["f_name"], $post["l_name"], $post["tel"], $post["email"], $post["role"], $post["facebook"], $post["id"], date("Y-m-d H:i:s"));
     $stmt->execute();
     $stmt->close();
     return $res->withJson('Updated successfuly.');
 });
-/*
-$app->delete('/contacts', function (Request $req, Response $res) use($conn) {
-    $post = $req->getParsedBody();
-    $stmt = $conn->prepare("UPDATE contacts SET f_name = ?, l_name = ?, tel = ?, email = ?, role = ?, facebook = ? WHERE id = ?");
-    $stmt->bind_param("ssssssi", $post["f_name"], $post["l_name"], $post["tel"], $post["email"], $post["role"], $post["facebook"], $post["id"]);
-    $stmt->execute();
-    $stmt->close();
-    return $res->withJson('Updated successfuly.');
-});
-*/
+
 $app->run();
