@@ -4,6 +4,10 @@
 use Psr\Http\Message\ResponseInterface as Response;
 use Psr\Http\Message\ServerRequestInterface as Request;
 
+use RapidWeb\GoogleOAuth2Handler\GoogleOAuth2Handler;
+use RapidWeb\GooglePeopleAPI\GooglePeople;
+use RapidWeb\GooglePeopleAPI\Contact;
+
 $app->get('/contacts', function (Request $req, Response $res, array $args) use($conn) {
     $stmt = $conn->prepare("SELECT * FROM contacts");
     $stmt->execute();

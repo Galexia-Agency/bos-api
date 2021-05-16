@@ -15,10 +15,6 @@ date_default_timezone_set('UTC');
 
 require_once __DIR__ . '/vendor/autoload.php';
 
-use RapidWeb\GoogleOAuth2Handler\GoogleOAuth2Handler;
-use RapidWeb\GooglePeopleAPI\GooglePeople;
-use RapidWeb\GooglePeopleAPI\Contact;
-
 $dotenv = Dotenv\Dotenv::createImmutable(__DIR__);
 $dotenv->load();
 $dotenv->required(['DATABASE_HOST', 'DATABASE_NAME', 'DATABASE_USER', 'DATABASE_PASS'])->notEmpty();
