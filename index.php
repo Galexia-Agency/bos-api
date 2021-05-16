@@ -9,9 +9,15 @@ header("Content-Security-Policy: default-src 'self'");
 header("Referrer-Policy: no-referrer");
 header("X-Content-Type-Options: nosniff");
 
+error_reporting(E_ALL);
+
 date_default_timezone_set('UTC');
 
 require_once __DIR__ . '/vendor/autoload.php';
+
+use RapidWeb\GoogleOAuth2Handler\GoogleOAuth2Handler;
+use RapidWeb\GooglePeopleAPI\GooglePeople;
+use RapidWeb\GooglePeopleAPI\Contact;
 
 $dotenv = Dotenv\Dotenv::createImmutable(__DIR__);
 $dotenv->load();
@@ -225,21 +231,33 @@ $app->get('/contacts', function (Request $req, Response $res, array $args) use($
     };
     $stmt->close();
 
-    $result = usort($contacts, function ($a, $b) {
-        return $a['updated_at'] <=> $b['updated_at'];
-    });
+    return $res->withJson($contacts);
+});
 
-    return $res->withJson($result);
+$app->get('/google-contacts', function (Request $req, Response $res, array $args) use($conn) {
+    return $res->withJson($people->all());
 });
 
 $app->put('/contacts', function (Request $req, Response $res) use($conn) {
     $post = $req->getParsedBody();
-    $stmt = $conn->prepare("INSERT into contacts (client_id, f_name, l_name, tel, email, role, facebook, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)");
-    $stmt->bind_param("issssssss", $post["client_id"], $post["f_name"], $post["l_name"], $post["tel"], $post["email"], $post["role"], $post["facebook"], date("Y-m-d H:i:s"), date("Y-m-d H:i:s"));
+
+    $clientId     = '206947755814-ptg3rokaucqcefc1ccjf1io7cs7e3vj2.apps.googleusercontent.com';
+    $clientSecret = 'XGzosEZeqZb9vRpwC_Orqqkw';
+    $refreshToken = '1//03VgN58Cnvh26CgYIARAAGAMSNwF-L9Ir1OvrlqJc61US9Ctt_6dr-egcagUMi9IBcQAIBgL26qLsQmI4DBzVtUtr8AbPtf779ck';
+    $scopes       = ['https://www.googleapis.com/auth/userinfo.profile', 'https://www.googleapis.com/auth/contacts', 'https://www.googleapis.com/auth/contacts.readonly'];
+    $googleOAuth2Handler = new GoogleOAuth2Handler($clientId, $clientSecret, $scopes, $refreshToken);
+    $people = new GooglePeople($googleOAuth2Handler);
+
+    $contact = new Contact($people);
+    
+    require('contact.php');
+
+    $stmt = $conn->prepare("INSERT into contacts (client_id, f_name, l_name, tel, email, role, facebook, created_at, updated_at, google_contact_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+    $stmt->bind_param("issssssss", $post["client_id"], $post["f_name"], $post["l_name"], $post["tel"], $post["email"], $post["role"], $post["facebook"], date("Y-m-d H:i:s"), date("Y-m-d H:i:s"), $contact->resourceName);
     $stmt->execute();
     $stmt->close();
 
-    $stmt = $conn->prepare("SELECT * FROM clients");
+    $stmt = $conn->prepare("SELECT * FROM contacts");
     $stmt->execute();
     $result = $stmt->get_result();
     $contacts = array();
@@ -258,11 +276,45 @@ $app->put('/contacts', function (Request $req, Response $res) use($conn) {
 
 $app->post('/contacts', function (Request $req, Response $res) use($conn) {
     $post = $req->getParsedBody();
-    $stmt = $conn->prepare("UPDATE contacts SET f_name = ?, l_name = ?, tel = ?, email = ?, role = ?, facebook = ?, updated_at WHERE id = ?");
-    $stmt->bind_param("ssssssis", $post["f_name"], $post["l_name"], $post["tel"], $post["email"], $post["role"], $post["facebook"], $post["id"], date("Y-m-d H:i:s"));
+
+    $clientId     = '206947755814-ptg3rokaucqcefc1ccjf1io7cs7e3vj2.apps.googleusercontent.com';
+    $clientSecret = 'XGzosEZeqZb9vRpwC_Orqqkw';
+    $refreshToken = '1//03VgN58Cnvh26CgYIARAAGAMSNwF-L9Ir1OvrlqJc61US9Ctt_6dr-egcagUMi9IBcQAIBgL26qLsQmI4DBzVtUtr8AbPtf779ck';
+    $scopes       = ['https://www.googleapis.com/auth/userinfo.profile', 'https://www.googleapis.com/auth/contacts', 'https://www.googleapis.com/auth/contacts.readonly'];
+    $googleOAuth2Handler = new GoogleOAuth2Handler($clientId, $clientSecret, $scopes, $refreshToken);
+    $people = new GooglePeople($googleOAuth2Handler);
+
+    try {
+        $people->get($post["google_contact_id"]);
+        $contact = $people->get($post["google_contact_id"]);
+    } catch (exception $e) {
+        $contact = new Contact($people);
+    }
+    
+    require('contact.php');
+
+    $stmt = $conn->prepare("UPDATE contacts SET f_name = ?, l_name = ?, tel = ?, email = ?, role = ?, facebook = ?, updated_at = ?, google_contact_id = ? WHERE id = ?");
+    $stmt->bind_param("ssssssssi", $post["f_name"], $post["l_name"], $post["tel"], $post["email"], $post["role"], $post["facebook"], date("Y-m-d H:i:s"), $contact->resourceName, $post["id"]);
     $stmt->execute();
     $stmt->close();
-    return $res->withJson('Updated successfuly.');
+
+    $stmt = $conn->prepare("SELECT * FROM contacts WHERE id = ?");
+    $stmt->bind_param("i", $post["id"]);
+    $stmt->execute();
+    $result = $stmt->get_result();
+
+    $response = array();
+
+    while($row = $result->fetch_assoc()) {
+        if($row) {
+            $response[] = $row;
+        }
+        else {
+            return $res->withJson(null);
+        }
+    };
+
+    return $res->withJson($response);
 });
 
 $app->run();
