@@ -1,9 +1,12 @@
 <?php
-    $contact->names[0]->familyName = $post["f_name"];
-    $contact->names[0]->givenName = $post["l_name"];
+    $contact->names[0]->familyName = $post["l_name"];
+    $contact->names[0]->givenName = $post["f_name"];
     $contact->names[0]->displayName = $post["f_name"] . ' ' . $post["l_name"];
     $contact->names[0]->displayNameLastFirst = $post["l_name"] . ', ' . $post["f_name"];
     $contact->names[0]->unstructuredName = $post["f_name"] . ' ' . $post["l_name"];
+    $contact->organizations[0]->name = $post["org"];
+    $contact->organizations[0]->title = $post["role"];
+    $contact->organizations[0]->title = $post["role"];
 
     $i = 0;
     $emails = $post["email"];
@@ -19,7 +22,5 @@
         $e = $e + 1;
     }
 
-    $contact->organizations[0]->name = $post["org"];
-    $contact->organizations[0]->title = $post["role"];
     $contact->save();
 ?>

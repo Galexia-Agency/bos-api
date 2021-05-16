@@ -139,8 +139,8 @@ $app->get('/', function (Request $req, Response $res, array $args) use($conn) {
 
 $app->post('/projects', function (Request $req, Response $res) use($conn) {
     $post = $req->getParsedBody();
-    $stmt = $conn->prepare("UPDATE projects SET name = ?, status = ?, hosting = ?, github_url = ? WHERE id = ?");
-    $stmt->bind_param("ssssi", $post["name"], $post["status"], $post["hosting"], $post["github_url"], $post["id"]);
+    $stmt = $conn->prepare("UPDATE projects SET name = ?, status = ?, hosting = ?, github_url = ?, project_url = ?, project_login_url = ? WHERE id = ?");
+    $stmt->bind_param("ssssssi", $post["name"], $post["status"], $post["hosting"], $post["github_url"], $post['project_url'], $post['project_login_url'], $post["id"]);
     $stmt->execute();
     $stmt->close();
     return $res->withJson('Updated successfuly.');
@@ -157,8 +157,8 @@ $app->post('/projects/lists', function (Request $req, Response $res) use($conn) 
 
 $app->put('/projects', function (Request $req, Response $res) use($conn) {
     $post = $req->getParsedBody();
-    $stmt = $conn->prepare("INSERT into projects (client_id, name, status, hosting, github_url) VALUES (?, ?, ?, ?, ?)");
-    $stmt->bind_param("issss", $post["client_id"], $post["name"], $post["status"], $post["hosting"], $post["github_url"]);
+    $stmt = $conn->prepare("INSERT into projects (client_id, name, status, project_url, project_login_url) VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
+    $stmt->bind_param("issssss", $post["client_id"], $post["name"], $post["status"], $post["hosting"], $post["github_url"], $post['project_url'], $post['project_login_url']);
     $stmt->execute();
     $stmt->close();
 
@@ -235,6 +235,13 @@ $app->get('/contacts', function (Request $req, Response $res, array $args) use($
 });
 
 $app->get('/google-contacts', function (Request $req, Response $res, array $args) use($conn) {
+    $clientId     = '206947755814-ptg3rokaucqcefc1ccjf1io7cs7e3vj2.apps.googleusercontent.com';
+    $clientSecret = 'XGzosEZeqZb9vRpwC_Orqqkw';
+    $refreshToken = '1//03VgN58Cnvh26CgYIARAAGAMSNwF-L9Ir1OvrlqJc61US9Ctt_6dr-egcagUMi9IBcQAIBgL26qLsQmI4DBzVtUtr8AbPtf779ck';
+    $scopes       = ['https://www.googleapis.com/auth/userinfo.profile', 'https://www.googleapis.com/auth/contacts', 'https://www.googleapis.com/auth/contacts.readonly'];
+    $googleOAuth2Handler = new GoogleOAuth2Handler($clientId, $clientSecret, $scopes, $refreshToken);
+    $people = new GooglePeople($googleOAuth2Handler);
+    
     return $res->withJson($people->all());
 });
 
@@ -252,8 +259,8 @@ $app->put('/contacts', function (Request $req, Response $res) use($conn) {
     
     require('contact.php');
 
-    $stmt = $conn->prepare("INSERT into contacts (client_id, f_name, l_name, tel, email, role, facebook, created_at, updated_at, google_contact_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
-    $stmt->bind_param("isssssssss", $post["client_id"], $post["f_name"], $post["l_name"], $post["tel"], $post["email"], $post["role"], $post["facebook"], date("Y-m-d H:i:s"), date("Y-m-d H:i:s"), $contact->resourceName);
+    $stmt = $conn->prepare("INSERT into contacts (client_id, f_name, l_name, tel, email, role, facebook, created_at, updated_at, google_contact_id, title) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+    $stmt->bind_param("issssssssss", $post["client_id"], $post["f_name"], $post["l_name"], $post["tel"], $post["email"], $post["role"], $post["facebook"], date("Y-m-d H:i:s"), date("Y-m-d H:i:s"), $contact->resourceName, $post["title"]);
     $stmt->execute();
     $stmt->close();
 
@@ -293,8 +300,8 @@ $app->post('/contacts', function (Request $req, Response $res) use($conn) {
     
     require('contact.php');
 
-    $stmt = $conn->prepare("UPDATE contacts SET f_name = ?, l_name = ?, tel = ?, email = ?, role = ?, facebook = ?, updated_at = ?, google_contact_id = ? WHERE id = ?");
-    $stmt->bind_param("ssssssssi", $post["f_name"], $post["l_name"], $post["tel"], $post["email"], $post["role"], $post["facebook"], date("Y-m-d H:i:s"), $contact->resourceName, $post["id"]);
+    $stmt = $conn->prepare("UPDATE contacts SET f_name = ?, l_name = ?, tel = ?, email = ?, role = ?, facebook = ?, updated_at = ?, google_contact_id = ?, title = ? WHERE id = ?");
+    $stmt->bind_param("sssssssssi", $post["f_name"], $post["l_name"], $post["tel"], $post["email"], $post["role"], $post["facebook"], date("Y-m-d H:i:s"), $contact->resourceName, $post["title"], $post["id"]);
     $stmt->execute();
     $stmt->close();
 
