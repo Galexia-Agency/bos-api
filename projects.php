@@ -6,8 +6,8 @@ use Psr\Http\Message\ServerRequestInterface as Request;
 
 $app->post('/projects', function (Request $req, Response $res) use($conn) {
     $post = $req->getParsedBody();
-    $stmt = $conn->prepare("UPDATE projects SET name = ?, status = ?, hosting = ?, github_url = ?, project_url = ?, project_login_url = ? WHERE id = ?");
-    $stmt->bind_param("ssssssi", $post["name"], $post["status"], $post["hosting"], $post["github_url"], $post['project_url'], $post['project_login_url'], $post["id"]);
+    $stmt = $conn->prepare("UPDATE projects SET name = ?, status = ?, hosting = ?, github_url = ?, project_url = ?, project_login_url = ?, updated_at = ? WHERE id = ?");
+    $stmt->bind_param("sssssssi", $post["name"], $post["status"], $post["hosting"], $post["github_url"], $post['project_url'], $post['project_login_url'], date("Y-m-d H:i:s"), $post["id"]);
     $stmt->execute();
     $stmt->close();
     return $res->withJson('Updated successfuly.');
@@ -15,8 +15,8 @@ $app->post('/projects', function (Request $req, Response $res) use($conn) {
 
 $app->post('/projects/lists', function (Request $req, Response $res) use($conn) {
     $post = $req->getParsedBody();
-    $stmt = $conn->prepare("UPDATE projects SET lists = ? WHERE id = ?");
-    $stmt->bind_param("si", $post["lists"], $post["id"]);
+    $stmt = $conn->prepare("UPDATE projects SET lists = ?, updated_at = ? WHERE id = ?");
+    $stmt->bind_param("ssi", $post["lists"], date("Y-m-d H:i:s"), $post["id"]);
     $stmt->execute();
     $stmt->close();
     return $res->withJson('Updated successfuly.');
@@ -24,8 +24,8 @@ $app->post('/projects/lists', function (Request $req, Response $res) use($conn) 
 
 $app->put('/projects', function (Request $req, Response $res) use($conn) {
     $post = $req->getParsedBody();
-    $stmt = $conn->prepare("INSERT into projects (client_id, name, status, project_url, project_login_url) VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
-    $stmt->bind_param("issssss", $post["client_id"], $post["name"], $post["status"], $post["hosting"], $post["github_url"], $post['project_url'], $post['project_login_url']);
+    $stmt = $conn->prepare("INSERT into projects (client_id, name, status, project_url, project_login_url, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+    $stmt->bind_param("issssssss", $post["client_id"], $post["name"], $post["status"], $post["hosting"], $post["github_url"], $post['project_url'], $post['project_login_url'], date("Y-m-d H:i:s"), date("Y-m-d H:i:s"));
     $stmt->execute();
     $stmt->close();
 
