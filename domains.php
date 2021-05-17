@@ -14,7 +14,7 @@ $app->put('/domains', function (Request $req, Response $res) use($conn) {
     $stmt = $conn->prepare("SELECT * FROM domains");
     $stmt->execute();
     $result = $stmt->get_result();
-    domains = array();
+    $domains = array();
     while($row = $result->fetch_assoc()) {
         if($row) {
             $projects[] = $row;
@@ -25,7 +25,7 @@ $app->put('/domains', function (Request $req, Response $res) use($conn) {
     };
     $stmt->close();
 
-    return $res->withJson(domains);
+    return $res->withJson($domains);
 });
 
 $app->post('/domains', function (Request $req, Response $res) use($conn) {
