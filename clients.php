@@ -31,7 +31,7 @@ $app->put('/clients', function (Request $req, Response $res) use($conn) {
 $app->post('/clients', function (Request $req, Response $res) use($conn) {
     $post = $req->getParsedBody();
     $stmt = $conn->prepare("UPDATE clients SET business_name = ?, business_shortname = ?, address = ?, source = ?, updated_at = ? WHERE id = ?");
-    $stmt->bind_param("sssssi", $post["business_name"], $post["business_shortname"], $post["address"], $post["source"], date("Y-m-d H:i:s"), $post["id"]);
+    $stmt->bind_param("sssssi", $post["business_name"], $post["business_shortname"], $post["address"], $post["source"], $dateTime, $post["id"]);
     $stmt->execute();
     $stmt->close();
 

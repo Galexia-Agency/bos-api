@@ -93,7 +93,7 @@ $app->post('/contacts', function (Request $req, Response $res) use($conn) {
     require('components/contact.php');
 
     $stmt = $conn->prepare("UPDATE contacts SET f_name = ?, l_name = ?, tel = ?, email = ?, role = ?, facebook = ?, updated_at = ?, google_contact_id = ?, title = ? WHERE id = ?");
-    $stmt->bind_param("sssssssssi", $post["f_name"], $post["l_name"], $post["tel"], $post["email"], $post["role"], $post["facebook"], date("Y-m-d H:i:s"), $contact->resourceName, $post["title"], $post["id"]);
+    $stmt->bind_param("sssssssssi", $post["f_name"], $post["l_name"], $post["tel"], $post["email"], $post["role"], $post["facebook"], $dateTime, $contact->resourceName, $post["title"], $post["id"]);
     $stmt->execute();
     $stmt->close();
 
