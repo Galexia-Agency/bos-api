@@ -15,7 +15,7 @@ error_reporting(E_ALL);
 
 date_default_timezone_set('UTC');
 
-$dateTime = date("Y-m-d H:i:s")
+$dateTime = date("Y-m-d H:i:s");
 
 require_once __DIR__ . '/vendor/autoload.php';
 
