@@ -52,7 +52,7 @@ $app->put('/contacts', function (Request $req, Response $res) use($conn) {
     require('components/contact.php');
 
     $stmt = $conn->prepare("INSERT into contacts (client_id, f_name, l_name, tel, email, role, facebook, created_at, updated_at, google_contact_id, title) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
-    $stmt->bind_param("issssssssss", $post["client_id"], $post["f_name"], $post["l_name"], $post["tel"], $post["email"], $post["role"], $post["facebook"], date("Y-m-d H:i:s"), date("Y-m-d H:i:s"), $contact->resourceName, $post["title"]);
+    $stmt->bind_param("issssssssss", $post["client_id"], $post["f_name"], $post["l_name"], $post["tel"], $post["email"], $post["role"], $post["facebook"], $dateTime, $dateTime, $contact->resourceName, $post["title"]);
     $stmt->execute();
     $stmt->close();
 
