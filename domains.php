@@ -31,7 +31,7 @@ $app->put('/domains', function (Request $req, Response $res) use($conn) {
 $app->post('/domains', function (Request $req, Response $res) use($conn) {
     $post = $req->getParsedBody();
     $stmt = $conn->prepare("UPDATE domains SET location = ?, url = ?, renewal = ?, updated_at = ? WHERE id = ?");
-    $stmt->bind_param("sssssssi", $post["location"], $post["url"], $post["renewal"], date("Y-m-d H:i:s"), $post["id"]);
+    $stmt->bind_param("sssssssi", $post["location"], $post["url"], $post["renewal"], $dateTime, $post["id"]);
     $stmt->execute();
     $stmt->close();
   

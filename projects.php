@@ -31,7 +31,7 @@ $app->put('/projects', function (Request $req, Response $res) use($conn) {
 $app->post('/projects', function (Request $req, Response $res) use($conn) {
     $post = $req->getParsedBody();
     $stmt = $conn->prepare("UPDATE projects SET name = ?, status = ?, hosting = ?, github_url = ?, project_url = ?, project_login_url = ?, updated_at = ? WHERE id = ?");
-    $stmt->bind_param("sssssssi", $post["name"], $post["status"], $post["hosting"], $post["github_url"], $post['project_url'], $post['project_login_url'], date("Y-m-d H:i:s"), $post["id"]);
+    $stmt->bind_param("sssssssi", $post["name"], $post["status"], $post["hosting"], $post["github_url"], $post['project_url'], $post['project_login_url'], $dateTime, $post["id"]);
     $stmt->execute();
     $stmt->close();
     
@@ -57,7 +57,7 @@ $app->post('/projects', function (Request $req, Response $res) use($conn) {
 $app->post('/projects/lists', function (Request $req, Response $res) use($conn) {
     $post = $req->getParsedBody();
     $stmt = $conn->prepare("UPDATE projects SET lists = ?, updated_at = ? WHERE id = ?");
-    $stmt->bind_param("ssi", $post["lists"], date("Y-m-d H:i:s"), $post["id"]);
+    $stmt->bind_param("ssi", $post["lists"], $dateTime, $post["id"]);
     $stmt->execute();
     
     $stmt->close();

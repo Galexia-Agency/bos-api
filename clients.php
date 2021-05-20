@@ -7,7 +7,7 @@ use Psr\Http\Message\ServerRequestInterface as Request;
 $app->put('/clients', function (Request $req, Response $res) use($conn) {
     $post = $req->getParsedBody();
     $stmt = $conn->prepare("INSERT into clients (business_name, business_shortname, address, source, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?)");
-    $stmt->bind_param("ssssss", $post["business_name"], $post["business_shortname"], $post["address"], $post["source"], date("Y-m-d H:i:s"), date("Y-m-d H:i:s"));
+    $stmt->bind_param("ssssss", $post["business_name"], $post["business_shortname"], $post["address"], $post["source"], $dateTime, $dateTime);
     $stmt->execute();
     $stmt->close();
 
