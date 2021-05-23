@@ -6,8 +6,8 @@ use Psr\Http\Message\ServerRequestInterface as Request;
 
 $app->put('/projects', function (Request $req, Response $res) use($conn) {
     $post = $req->getParsedBody();
-    $stmt = $conn->prepare("INSERT into projects (client_id, name, status, hosting, github_url, project_url, project_login_url, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)");
-    $stmt->bind_param("issssssss", $post["client_id"], $post["name"], $post["status"], $post["hosting"], $post["github_url"], $post['project_url'], $post['project_login_url'], $dateTime, $dateTime);
+    $stmt = $conn->prepare("INSERT into projects (client_id, name, status, hosting, github_url, project_url, project_login_url, created_at, updated_at, pandle_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+    $stmt->bind_param("isssssssss", $post["client_id"], $post["name"], $post["status"], $post["hosting"], $post["github_url"], $post['project_url'], $post['project_login_url'], $dateTime, $dateTime, $post["pandle_id"]);
     $stmt->execute();
     $stmt->close();
 
@@ -30,8 +30,8 @@ $app->put('/projects', function (Request $req, Response $res) use($conn) {
 
 $app->post('/projects', function (Request $req, Response $res) use($conn) {
     $post = $req->getParsedBody();
-    $stmt = $conn->prepare("UPDATE projects SET name = ?, status = ?, hosting = ?, github_url = ?, project_url = ?, project_login_url = ?, updated_at = ? WHERE id = ?");
-    $stmt->bind_param("sssssssi", $post["name"], $post["status"], $post["hosting"], $post["github_url"], $post['project_url'], $post['project_login_url'], $dateTime, $post["id"]);
+    $stmt = $conn->prepare("UPDATE projects SET name = ?, status = ?, hosting = ?, github_url = ?, project_url = ?, project_login_url = ?, updated_at = ?, pandle_id =? WHERE id = ?");
+    $stmt->bind_param("ssssssssi", $post["name"], $post["status"], $post["hosting"], $post["github_url"], $post['project_url'], $post['project_login_url'], $dateTime, $post["pandle_id"], $post["id"]);
     $stmt->execute();
     $stmt->close();
     

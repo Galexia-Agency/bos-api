@@ -6,8 +6,8 @@ use Psr\Http\Message\ServerRequestInterface as Request;
 
 $app->put('/clients', function (Request $req, Response $res) use($conn) {
     $post = $req->getParsedBody();
-    $stmt = $conn->prepare("INSERT into clients (business_name, business_shortname, address, source, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?)");
-    $stmt->bind_param("ssssss", $post["business_name"], $post["business_shortname"], $post["address"], $post["source"], $dateTime, $dateTime);
+    $stmt = $conn->prepare("INSERT into clients (business_name, business_shortname, address, source, created_at, updated_at, pandle_id) VALUES (?, ?, ?, ?, ?, ?, ?)");
+    $stmt->bind_param("sssssss", $post["business_name"], $post["business_shortname"], $post["address"], $post["source"], $dateTime, $dateTime, $post["pandle_id"]);
     $stmt->execute();
     $stmt->close();
 
@@ -30,8 +30,8 @@ $app->put('/clients', function (Request $req, Response $res) use($conn) {
 
 $app->post('/clients', function (Request $req, Response $res) use($conn) {
     $post = $req->getParsedBody();
-    $stmt = $conn->prepare("UPDATE clients SET business_name = ?, business_shortname = ?, address = ?, source = ?, updated_at = ? WHERE id = ?");
-    $stmt->bind_param("sssssi", $post["business_name"], $post["business_shortname"], $post["address"], $post["source"], $dateTime, $post["id"]);
+    $stmt = $conn->prepare("UPDATE clients SET business_name = ?, business_shortname = ?, address = ?, source = ?, updated_at = ?, pandle_id = ? WHERE id = ?");
+    $stmt->bind_param("ssssssi", $post["business_name"], $post["business_shortname"], $post["address"], $post["source"], $dateTime, $post["pandle_id"], $post["id"]);
     $stmt->execute();
     $stmt->close();
 
