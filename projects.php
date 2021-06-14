@@ -6,8 +6,8 @@ use Psr\Http\Message\ServerRequestInterface as Request;
 
 $app->put('/projects', function (Request $req, Response $res) use($conn) {
     $post = $req->getParsedBody();
-    $stmt = $conn->prepare("INSERT into projects (client_id, name, status, hosting, github_url, project_url, project_login_url, created_at, updated_at, pandle_id, completion_amount) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
-    $stmt->bind_param("issssssssss", $post["client_id"], $post["name"], $post["status"], $post["hosting"], $post["github_url"], $post['project_url'], $post['project_login_url'], $dateTime, $dateTime, $post["pandle_id"], $post["completion_amount"]);
+    $stmt = $conn->prepare("INSERT into projects (client_id, name, status, hosting, github_url, project_url, project_login_url, created_at, updated_at, pandle_id, completion_amount, bb_revenue, bb_expenses) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+    $stmt->bind_param("isssssssssiii", $post["client_id"], $post["name"], $post["status"], $post["hosting"], $post["github_url"], $post['project_url'], $post['project_login_url'], $dateTime, $dateTime, $post["pandle_id"], $post["completion_amount"], $post["bb_revenue"], $post["bb_expenses"]);
     $stmt->execute();
     $stmt->close();
 
@@ -30,8 +30,8 @@ $app->put('/projects', function (Request $req, Response $res) use($conn) {
 
 $app->post('/projects', function (Request $req, Response $res) use($conn) {
     $post = $req->getParsedBody();
-    $stmt = $conn->prepare("UPDATE projects SET name = ?, status = ?, hosting = ?, github_url = ?, project_url = ?, project_login_url = ?, updated_at = ?, pandle_id =?, completion_amount = ? WHERE id = ?");
-    $stmt->bind_param("sssssssssi", $post["name"], $post["status"], $post["hosting"], $post["github_url"], $post['project_url'], $post['project_login_url'], $dateTime, $post["pandle_id"], $post["completion_amount"], $post["id"]);
+    $stmt = $conn->prepare("UPDATE projects SET name = ?, status = ?, hosting = ?, github_url = ?, project_url = ?, project_login_url = ?, updated_at = ?, pandle_id =?, completion_amount = ?, bb_revenue = ?, bb_expenses = ? WHERE id = ?");
+    $stmt->bind_param("ssssssssiiii", $post["name"], $post["status"], $post["hosting"], $post["github_url"], $post['project_url'], $post['project_login_url'], $dateTime, $post["pandle_id"], $post["completion_amount"], $post["bb_revenue"], $post["bb_expenses"], $post["id"]);
     $stmt->execute();
     $stmt->close();
     
