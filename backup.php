@@ -26,7 +26,8 @@
     $mysqlUserName = $_ENV['DATABASE_USER'];
     $mysqlPassword = $_ENV['DATABASE_PASS'];
     $mysqlHostName = $_ENV['DATABASE_HOST'];
-    $mysqlExportPath = 'Galexia_Backup.sql';
+    $day = date('H');
+    $mysqlExportPath = "Galexia_Backup-$day.sql";
 
     //Please do not change the following points
     //Export of the database and output of the status
