@@ -6,7 +6,7 @@ use Psr\Http\Message\ServerRequestInterface as Request;
 
 $app->put('/projects', function (Request $req, Response $res) use($conn) {
     $post = $req->getParsedBody();
-    $stmt = $conn->prepare("INSERT into projects (client_id, name, status, hosting, github_url, drive_url, project_url, project_login_url, created_at, updated_at, pandle_id, completion_amount, bb_revenue, bb_expenses) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+    $stmt = $conn->prepare("INSERT into projects (client_id, name, status, hosting, github_url, drive_url, project_url, project_login_url, created_at, updated_at, pandle_id, completion_amount, bb_revenue, bb_expenses) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
     $stmt->bind_param("issssssssssiii", $post["client_id"], $post["name"], $post["status"], $post["hosting"], $post["github_url"], $post["drive_url"], $post['project_url'], $post['project_login_url'], $dateTime, $dateTime, $post["pandle_id"], $post["completion_amount"], $post["bb_revenue"], $post["bb_expenses"]);
     $stmt->execute();
     $stmt->close();
