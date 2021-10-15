@@ -12,7 +12,6 @@ header("X-Content-Type-Options: nosniff");
 ini_set('display_errors', 1);
 ini_set('display_startup_errors', 1);
 error_reporting(E_ERROR | E_PARSE);
-
 date_default_timezone_set('UTC');
 
 $dateTime = date("Y-m-d H:i:s");
@@ -21,12 +20,50 @@ require_once __DIR__ . '/vendor/autoload.php';
 
 $dotenv = Dotenv\Dotenv::createImmutable(__DIR__);
 $dotenv->load();
-$dotenv->required(['DATABASE_HOST', 'DATABASE_NAME', 'DATABASE_USER', 'DATABASE_PASS'])->notEmpty();
+$dotenv->required(['CLIENT_ID', 'ISSUER', 'DATABASE_HOST', 'DATABASE_NAME', 'DATABASE_USER', 'DATABASE_PASS'])->notEmpty();
 
 // Don't do anything for prefetch requests.
 if ( $_SERVER['REQUEST_METHOD'] === 'OPTIONS' ) {
     return http_response_code( 200 );
 };
+
+// Make sure the authorization header is available, if not return 401.
+if (!isset( $_SERVER['HTTP_AUTHORIZATION'] ) ) {
+    echo "no authorization";
+    return http_response_code( 401 );
+} else {
+    list( $authType, $authData ) = explode( " ", $_SERVER['HTTP_AUTHORIZATION'], 2 );
+};
+
+// If the Authorization Header is not a bearer type, return a 401.
+if ( $authType != 'Bearer' ) {
+    echo "not bearer";
+    return http_response_code( 401 );
+};
+
+$ISSUER = $_ENV['ISSUER'];
+$CLIENT_ID = $_ENV['CLIENT_ID'];
+$ch = curl_init("$ISSUER/v1/introspect?token=$authData&client_id=$CLIENT_ID");
+curl_setopt($ch, CURLOPT_POST, 1);
+curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+curl_setopt($ch, CURLOPT_HTTPHEADER, array(
+    "Accept: application/json",
+    "Content-Type: application/x-www-form-urlencoded",
+    "Origin: https://api.galexia.agency"
+));
+
+// execute!
+$response = json_decode(curl_exec($ch));
+
+if (!curl_errno($ch)) {
+    switch ($http_code = curl_getinfo($ch, CURLINFO_HTTP_CODE)) {
+        case 200:  # OK
+            break;
+        default:
+            return http_response_code( 401 );
+            exit();
+    }
+}
 
 $db_host = $_ENV['DATABASE_HOST'];
 $db_name = $_ENV['DATABASE_NAME'];
