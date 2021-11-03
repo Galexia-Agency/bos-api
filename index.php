@@ -106,7 +106,7 @@ $app->setBasePath('');
 // Create our PHP renderer object
 $view = new \Slim\Views\PhpRenderer('views');
 
-$app->get('/', function (Request $req, Response $res, array $args) use($conn) {
+$app->get('/get/{email}', function (Request $req, Response $res, array $args) use($conn) {
     $stmt = $conn->prepare("SELECT * FROM clients");
     $stmt->execute();
     $result = $stmt->get_result();
@@ -149,7 +149,7 @@ $app->get('/', function (Request $req, Response $res, array $args) use($conn) {
     };
     $stmt->close();
 
-    $stmt = $conn->prepare("SELECT * FROM projects");
+    $stmt = $conn->prepare("SELECT * FROM projects WHERE FIND_IN_SET('" . $args["email"] . "', viewer) OR FIND_IN_SET('" . $args["email"] . "', contributor) OR FIND_IN_SET('" . $args["email"] . "', admin)");
     $stmt->execute();
     $result = $stmt->get_result();
     $projects = array();
