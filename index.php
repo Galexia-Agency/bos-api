@@ -20,7 +20,7 @@ require_once __DIR__ . '/vendor/autoload.php';
 
 $dotenv = Dotenv\Dotenv::createImmutable(__DIR__);
 $dotenv->load();
-$dotenv->required(['CLIENT_ID', 'ISSUER', 'DATABASE_HOST', 'DATABASE_NAME', 'DATABASE_USER', 'DATABASE_PASS'])->notEmpty();
+$dotenv->required(['CLIENT_ID', 'ISSUER', 'DATABASE_HOST', 'DATABASE_NAME', 'DATABASE_USER', 'DATABASE_PASS', 'GOOGLE_CLIENT_ID', 'GOOGLE_CLIENT_SECRET', 'GOOGLE_REFRESH_TOKEN'])->notEmpty();
 
 // Don't do anything for prefetch requests.
 if ( $_SERVER['REQUEST_METHOD'] === 'OPTIONS' ) {

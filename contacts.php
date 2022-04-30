@@ -8,6 +8,13 @@ use RapidWeb\GoogleOAuth2Handler\GoogleOAuth2Handler;
 use RapidWeb\GooglePeopleAPI\GooglePeople;
 use RapidWeb\GooglePeopleAPI\Contact;
 
+$clientId     = $_ENV['GOOGLE_CLIENT_ID'];
+$clientSecret = $_ENV['GOOGLE_CLIENT_SECRET'];
+$refreshToken = $_ENV['GOOGLE_REFRESH_TOKEN'];
+$scopes       = ['https://www.googleapis.com/auth/userinfo.profile', 'https://www.googleapis.com/auth/contacts', 'https://www.googleapis.com/auth/contacts.readonly'];
+$googleOAuth2Handler = new GoogleOAuth2Handler($clientId, $clientSecret, $scopes, $refreshToken);
+$people = new GooglePeople($googleOAuth2Handler);
+
 $app->get('/contacts', function (Request $req, Response $res, array $args) use($conn) {
     $stmt = $conn->prepare("SELECT * FROM contacts");
     $stmt->execute();
@@ -27,25 +34,14 @@ $app->get('/contacts', function (Request $req, Response $res, array $args) use($
 });
 
 $app->get('/google-contacts', function (Request $req, Response $res, array $args) use($conn) {
-    $clientId     = '206947755814-ptg3rokaucqcefc1ccjf1io7cs7e3vj2.apps.googleusercontent.com';
-    $clientSecret = 'XGzosEZeqZb9vRpwC_Orqqkw';
-    $refreshToken = '1//03VgN58Cnvh26CgYIARAAGAMSNwF-L9Ir1OvrlqJc61US9Ctt_6dr-egcagUMi9IBcQAIBgL26qLsQmI4DBzVtUtr8AbPtf779ck';
-    $scopes       = ['https://www.googleapis.com/auth/userinfo.profile', 'https://www.googleapis.com/auth/contacts', 'https://www.googleapis.com/auth/contacts.readonly'];
-    $googleOAuth2Handler = new GoogleOAuth2Handler($clientId, $clientSecret, $scopes, $refreshToken);
-    $people = new GooglePeople($googleOAuth2Handler);
-
+    global $people;
     return $res->withJson($people->all());
 });
 
 $app->put('/contacts', function (Request $req, Response $res) use($conn) {
-    $post = $req->getParsedBody();
+    global $people;
 
-    $clientId     = '206947755814-ptg3rokaucqcefc1ccjf1io7cs7e3vj2.apps.googleusercontent.com';
-    $clientSecret = 'XGzosEZeqZb9vRpwC_Orqqkw';
-    $refreshToken = '1//03VgN58Cnvh26CgYIARAAGAMSNwF-L9Ir1OvrlqJc61US9Ctt_6dr-egcagUMi9IBcQAIBgL26qLsQmI4DBzVtUtr8AbPtf779ck';
-    $scopes       = ['https://www.googleapis.com/auth/userinfo.profile', 'https://www.googleapis.com/auth/contacts', 'https://www.googleapis.com/auth/contacts.readonly'];
-    $googleOAuth2Handler = new GoogleOAuth2Handler($clientId, $clientSecret, $scopes, $refreshToken);
-    $people = new GooglePeople($googleOAuth2Handler);
+    $post = $req->getParsedBody();
 
     $contact = new Contact($people);
     
@@ -74,14 +70,8 @@ $app->put('/contacts', function (Request $req, Response $res) use($conn) {
 });
 
 $app->post('/contacts', function (Request $req, Response $res) use($conn) {
+    global $people;
     $post = $req->getParsedBody();
-
-    $clientId     = '206947755814-ptg3rokaucqcefc1ccjf1io7cs7e3vj2.apps.googleusercontent.com';
-    $clientSecret = 'XGzosEZeqZb9vRpwC_Orqqkw';
-    $refreshToken = '1//03VgN58Cnvh26CgYIARAAGAMSNwF-L9Ir1OvrlqJc61US9Ctt_6dr-egcagUMi9IBcQAIBgL26qLsQmI4DBzVtUtr8AbPtf779ck';
-    $scopes       = ['https://www.googleapis.com/auth/userinfo.profile', 'https://www.googleapis.com/auth/contacts', 'https://www.googleapis.com/auth/contacts.readonly'];
-    $googleOAuth2Handler = new GoogleOAuth2Handler($clientId, $clientSecret, $scopes, $refreshToken);
-    $people = new GooglePeople($googleOAuth2Handler);
 
     try {
         $people->get($post["google_contact_id"]);
