@@ -12,22 +12,14 @@
     $dotenv = Dotenv\Dotenv::createImmutable(__DIR__);
     $dotenv->load();
     $dotenv->required(['DATABASE_HOST', 'DATABASE_NAME', 'DATABASE_USER'])->notEmpty();
-    function generateRandomString($length = 10) {
-        $characters = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
-        $charactersLength = strlen($characters);
-        $randomString = '';
-        for ($i = 0; $i < $length; $i++) {
-            $randomString .= $characters[rand(0, $charactersLength - 1)];
-        }
-        return $randomString;
-    }
     //Enter your database information here and the name of the backup file
     $mysqlDatabaseName = $_ENV['DATABASE_NAME'];
     $mysqlUserName = $_ENV['DATABASE_USER'];
     $mysqlPassword = $_ENV['DATABASE_PASS'];
     $mysqlHostName = $_ENV['DATABASE_HOST'];
-    $day = date('H');
-    $mysqlExportPath = "Galexia_Backup-$day.sql";
+    $hour = date('H');
+    $minute = date('i');
+    $mysqlExportPath = "Galexia_Backup-$hour-$minute.sql";
 
     //Please do not change the following points
     //Export of the database and output of the status
