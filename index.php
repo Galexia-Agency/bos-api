@@ -25,12 +25,14 @@ $dotenv->required(['CLIENT_ID', 'ISSUER', 'DATABASE_HOST', 'DATABASE_NAME', 'DAT
 // Don't do anything for prefetch requests.
 if ( $_SERVER['REQUEST_METHOD'] === 'OPTIONS' ) {
     return http_response_code( 200 );
+    exit;
 };
 
 // Make sure the authorization header is available, if not return 401.
 if (!isset( $_SERVER['HTTP_AUTHORIZATION'] ) ) {
     echo "no authorization";
     return http_response_code( 401 );
+    exit;
 } else {
     list( $authType, $authData ) = explode( " ", $_SERVER['HTTP_AUTHORIZATION'], 2 );
 };
@@ -39,31 +41,43 @@ if (!isset( $_SERVER['HTTP_AUTHORIZATION'] ) ) {
 if ( $authType != 'Bearer' ) {
     echo "not bearer";
     return http_response_code( 401 );
+    exit;
 };
 
 $ISSUER = $_ENV['ISSUER'];
 $CLIENT_ID = $_ENV['CLIENT_ID'];
-$ch = curl_init("$ISSUER/v1/introspect?token=$authData&client_id=$CLIENT_ID");
+$CLIENT_SECRET = $_ENV['CLIENT_SECRET'];
+$ch = curl_init("$ISSUER/default/v1/introspect?token=$authData&token_type_hint=access_token");
 curl_setopt($ch, CURLOPT_POST, 1);
 curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
 curl_setopt($ch, CURLOPT_HTTPHEADER, array(
     "Accept: application/json",
     "Content-Type: application/x-www-form-urlencoded",
-    "Origin: https://api.galexia.agency"
+    "Origin: https://api.galexia.agency",
+    "Authorization: Basic " . base64_encode("$CLIENT_ID:$CLIENT_SECRET")
 ));
 
 // execute!
-$response = json_decode(curl_exec($ch));
+$response = json_decode(curl_exec($ch), true);
 
 if (!curl_errno($ch)) {
     switch ($http_code = curl_getinfo($ch, CURLINFO_HTTP_CODE)) {
         case 200:  # OK
-            break;
+            continue;
         default:
             return http_response_code( 401 );
             exit();
     }
+} else {
+    return http_response_code( 500 );
+    exit();
 }
+if (!$response['active']) {
+    return http_response_code( 401 );
+    exit();
+}
+
+$email = $response['username'];
 
 $db_host = $_ENV['DATABASE_HOST'];
 $db_name = $_ENV['DATABASE_NAME'];
@@ -106,8 +120,36 @@ $app->setBasePath('');
 // Create our PHP renderer object
 $view = new \Slim\Views\PhpRenderer('views');
 
-$app->get('/get/{email}', function (Request $req, Response $res, array $args) use($conn) {
-    $stmt = $conn->prepare("SELECT * FROM clients");
+$app->get('/get', function (Request $req, Response $res, array $args) use($conn) {
+    global $email;
+
+    $stmt = $conn->prepare("SELECT * FROM projects WHERE FIND_IN_SET('" . $email . "', viewer) OR FIND_IN_SET('" . $email . "', contributor) OR FIND_IN_SET('" . $email . "', admin)");
+    $stmt->execute();
+    $result = $stmt->get_result();
+    $projects = array();
+    while($row = $result->fetch_assoc()) {
+        if($row) {
+            $projects[] = $row;
+        }
+        else {
+            return $res->withJson(null);
+        }
+    };
+
+    $project_client_ids = array();
+
+    $project_ids = array();
+
+    foreach ($projects as $project) {
+        array_push($project_client_ids, $project['client_id']);
+        array_push($project_ids, $project['id']);
+    }
+
+    $client_ids_to_search = implode(",",$project_client_ids);
+    $project_ids_to_search = implode(",",$project_ids);
+
+    $stmt->close();
+    $stmt = $conn->prepare("SELECT * FROM clients WHERE id IN ($client_ids_to_search)");
     $stmt->execute();
     $result = $stmt->get_result();
     $clients = array();
@@ -121,7 +163,7 @@ $app->get('/get/{email}', function (Request $req, Response $res, array $args) us
     };
     $stmt->close();
 
-    $stmt = $conn->prepare("SELECT * FROM contacts");
+    $stmt = $conn->prepare("SELECT * FROM contacts WHERE client_id IN ($client_ids_to_search)");
     $stmt->execute();
     $result = $stmt->get_result();
     $contacts = array();
@@ -135,27 +177,13 @@ $app->get('/get/{email}', function (Request $req, Response $res, array $args) us
     };
     $stmt->close();
 
-    $stmt = $conn->prepare("SELECT * FROM domains");
+    $stmt = $conn->prepare("SELECT * FROM domains WHERE project_id IN ($project_ids_to_search)");
     $stmt->execute();
     $result = $stmt->get_result();
     $domains = array();
     while($row = $result->fetch_assoc()) {
         if($row) {
             $domains[] = $row;
-        }
-        else {
-            return $res->withJson(null);
-        }
-    };
-    $stmt->close();
-
-    $stmt = $conn->prepare("SELECT * FROM projects WHERE FIND_IN_SET('" . $args["email"] . "', viewer) OR FIND_IN_SET('" . $args["email"] . "', contributor) OR FIND_IN_SET('" . $args["email"] . "', admin)");
-    $stmt->execute();
-    $result = $stmt->get_result();
-    $projects = array();
-    while($row = $result->fetch_assoc()) {
-        if($row) {
-            $projects[] = $row;
         }
         else {
             return $res->withJson(null);
