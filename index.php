@@ -1,7 +1,7 @@
 <?php
 header("Access-Control-Allow-Origin: *");
 header("Access-Control-Allow-Methods: GET, POST, OPTIONS, PUT, DELETE");
-header("Access-Control-Allow-Headers: Authorization, Origin, X-Requested-With, Content-Type, Accept");
+header("Access-Control-Allow-Headers: Authorization, Origin, X-Requested-With, Content-Type, Accept, access-token, client, uid");
 header("Content-Type: application/json; charset=UTF-8");
 header("X-Frame-Options: DENY");
 header("Strict-Transport-Security: max-age=15552000; preload");
