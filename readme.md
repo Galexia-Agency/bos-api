@@ -1,4 +1,4 @@
-# [API for Galexia CRM](https://api.galexia.agency)
+# [API for Galexia BOS](https://api.galexia.agency)
 
 ## Development
 
