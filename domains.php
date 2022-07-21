@@ -7,7 +7,7 @@ use Psr\Http\Message\ServerRequestInterface as Request;
 $app->put('/domains', function (Request $req, Response $res) use($conn) {
     $post = $req->getParsedBody();
     $stmt = $conn->prepare("INSERT into domains (location, url, project_id, renewal, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?)");
-    $stmt->bind_param("ssssss", $post["location"], $post["url"], $post["project_id"], $post["renewal"], $dateTime, $dateTime);
+    $stmt->bind_param("ssssss", $post["location"], $post["url"], $post["project_id"], $post["renewal"], date("Y-m-d H:i:s"), date("Y-m-d H:i:s"));
     $stmt->execute();
     $stmt->close();
 
@@ -31,7 +31,7 @@ $app->put('/domains', function (Request $req, Response $res) use($conn) {
 $app->post('/domains', function (Request $req, Response $res) use($conn) {
     $post = $req->getParsedBody();
     $stmt = $conn->prepare("UPDATE domains SET location = ?, url = ?, renewal = ?, updated_at = ? WHERE id = ?");
-    $stmt->bind_param("sssssssi", $post["location"], $post["url"], $post["renewal"], $dateTime, $post["id"]);
+    $stmt->bind_param("sssssssi", $post["location"], $post["url"], $post["renewal"], date("Y-m-d H:i:s"), $post["id"]);
     $stmt->execute();
     $stmt->close();
   

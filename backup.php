@@ -24,7 +24,8 @@
     //Please do not change the following points
     //Export of the database and output of the status
     $command='mysqldump --opt -h' .$mysqlHostName .' -u' .$mysqlUserName .' -p' .$mysqlPassword .' ' .$mysqlDatabaseName .' > ' .$mysqlExportPath;
-    exec($command, $output=array(), $worked);
+    $output=array();
+    exec($command, $output, $worked);
     switch($worked){
         case 0:
             return http_response_code( 200 );
