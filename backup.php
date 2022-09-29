@@ -2,7 +2,7 @@
     header("Access-Control-Allow-Origin: *");
     header("Access-Control-Allow-Methods: GET, OPTIONS");
     header("Access-Control-Allow-Headers: Origin, X-Requested-With, Content-Type, Accept");
-    header("Content-Type: application/json; charset=UTF-8");
+    header("Content-Type: application/sql; charset=UTF-8");
     header("X-Frame-Options: DENY");
     header("Strict-Transport-Security: max-age=15552000; preload");
     header("Content-Security-Policy: default-src 'self'");
@@ -21,14 +21,19 @@
     $minute = date('i');
     $mysqlExportPath = "Galexia_Backup-$hour-$minute.sql";
 
-    //Please do not change the following points
-    //Export of the database and output of the status
+    // Please do not change the following points
+    // Export of the database and output of the status
     $command='mysqldump --opt -h' .$mysqlHostName .' -u' .$mysqlUserName .' -p' .$mysqlPassword .' ' .$mysqlDatabaseName .' > ' .$mysqlExportPath;
     $output=array();
     exec($command, $output, $worked);
-    switch($worked){
+    switch($worked) {
         case 0:
-            return http_response_code( 200 );
+            $size = filesize($mysqlExportPath);
+            header("Content-length: $size");
+            http_response_code( 200 );
+            print_r(file_get_contents($mysqlExportPath));
+            unlink($mysqlExportPath);
+            return;
             break;
         case 1:
             return http_response_code( 500 );
