@@ -8,6 +8,7 @@
     "slim/psr7" : "^0.6.0",
     "slim/http" :" ^1.0",
     "slim/php-view": "^2.2",
-    "rapidwebltd/php-google-people-api": "^1.0"
+    "rapidwebltd/php-google-people-api": "^1.0",
+    "hhxsv5/php-sse": "~2.0"
   }
 }
