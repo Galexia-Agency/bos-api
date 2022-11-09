@@ -4,6 +4,22 @@
 use Psr\Http\Message\ResponseInterface as Response;
 use Psr\Http\Message\ServerRequestInterface as Request;
 
+function selectProjectById ($conn, $id) {
+    $stmt = $conn->prepare("SELECT * FROM projects WHERE id = ?");
+    $stmt->bind_param("i", $id);
+    $stmt->execute();
+    $result = $stmt->get_result();
+
+    $response = array();
+
+    while ($row = $result->fetch_assoc()) {
+        if ($row) {
+            $response[] = $row;
+        }
+    };
+    return $response;
+}
+
 $app->put('/projects', function (Request $req, Response $res) use ($conn) {
     $post = $req->getParsedBody();
     $stmt = $conn->prepare("INSERT into projects (client_id, name, status, hosting, github_url, drive_url, project_url, project_login_url, created_at, updated_at, pandle_id, completion_amount, bb_revenue, bb_expenses, viewer, contributor, admin) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
@@ -34,68 +50,58 @@ $app->post('/projects', function (Request $req, Response $res) use ($conn) {
     $stmt->execute();
     $stmt->close();
 
-    $stmt = $conn->prepare("SELECT * FROM projects WHERE id = ?");
-    $stmt->bind_param("i", $post["id"]);
-    $stmt->execute();
-    $result = $stmt->get_result();
-
-    $response = array();
-
-    while ($row = $result->fetch_assoc()) {
-        if ($row) {
-            $response[] = $row;
-        } else {
-            return $res->withJson(null);
-        }
-    };
-
-    return $res->withJson($response);
+    return $res->withJson(selectProjectById($conn, $post["id"]));
 });
 
 $app->post('/projects/lists', function (Request $req, Response $res) use ($conn) {
     $post = $req->getParsedBody();
+
+    // Fetch the project by id from the database
+    $response = selectProjectById($conn, $post["id"]);
+
     // If we're forcing the change then skip the check for updated content
     if (!$post["force"] && $post["updated_at"]) {
-        // Fetch the project by id from the database
-        $stmt = $conn->prepare("SELECT * from projects WHERE id = ?");
-        $stmt->bind_param("i", $post["id"]);
-        $stmt->execute();
-        $result = $stmt->get_result();
-
-        $response = array();
-
-        while ($row = $result->fetch_assoc()) {
-            if ($row) {
-                // If the database project is newer than the clients project then return the databases version with a 429 status code
-                $response[] = $row;
-                if ($post["updated_at"] < $row['updated_at']) {
-                    return $res->withStatus(429)->withJson($response);
-                }
-            } else {
-                return $res->withJson(null);
+        if ($response) {
+            if ($post["updated_at"] < $response[0]['updated_at']) {
+                return $res->withStatus(429)->withJson($response);
             }
-        };
-        $stmt->close();
+        } else {
+            return $res->withJson(null);
+        }
     }
 
     $stmt = $conn->prepare("UPDATE projects SET lists = ?, updated_at = ? WHERE id = ?");
     $stmt->bind_param("ssi", $post["lists"], date("Y-m-d H:i:s"), $post["id"]);
     $stmt->execute();
     $stmt->close();
-    $stmt = $conn->prepare("SELECT * FROM projects WHERE id = ?");
-    $stmt->bind_param("i", $post["id"]);
-    $stmt->execute();
-    $result = $stmt->get_result();
 
-    $response = array();
-
-    while ($row = $result->fetch_assoc()) {
-        if ($row) {
-            $response[] = $row;
-        } else {
-            return $res->withJson(null);
-        }
-    };
+    // Fetch the project by id from the database
+    $response = selectProjectById($conn, $post["id"]);
 
     return $res->withJson($response);
+});
+
+$app->get('/projects/sse', function (Request $req, Response $res) use ($conn) {
+    // If this isn't the first request, return a response after 25 seconds
+    if ($_SERVER['HTTP_LAST_EVENT_ID']) {
+        sleep(10);
+    }
+
+    // If the id parameter is missing
+    if (!$_GET['id']) {
+        return $res->withStatus(400)->withJson("Bad request - missing id parameter");
+    }
+
+  // Fetch the data
+  $response = selectProjectById($conn, $_GET['id']);
+
+  // Write the data
+  return $res
+    ->withHeader('Content-Type', 'text/event-stream')
+    ->withHeader('Cache-Control', 'no-cache')
+    ->withHeader('Connection', 'keep-alive')
+    ->withHeader('X-Accel-Buffering', 'no')
+    ->write("event: " . $response[0]['id'] . "\n")
+    ->write("id: " . $response[0]['updated_at'] . "\n")
+    ->write("data: " . json_encode($response) . "\n\n");
 });
