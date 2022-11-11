@@ -17,6 +17,9 @@ function selectProjectById ($conn, $id) {
             $response[] = $row;
         }
     };
+    if (empty($response)) {
+        return null;
+    }
     return $response;
 }
 
