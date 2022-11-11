@@ -48,12 +48,30 @@ $app->put('/projects', function (Request $req, Response $res) use ($conn) {
 
 $app->post('/projects', function (Request $req, Response $res) use ($conn) {
     $post = $req->getParsedBody();
+
+    // Fetch the project by id from the database
+    $response = selectProjectById($conn, $post["id"]);
+
+    // If we're forcing the change then skip the check for updated content
+    if (!$post["force"] && $post["updated_at"]) {
+        if ($response) {
+            if ($post["updated_at"] < $response[0]['updated_at']) {
+                return $res->withStatus(429)->withJson($response);
+            }
+        } else {
+            return $res->withJson(null);
+        }
+    }
+
     $stmt = $conn->prepare("UPDATE projects SET name = ?, status = ?, hosting = ?, github_url = ?, drive_url = ?, project_url = ?, project_login_url = ?, updated_at = ?, pandle_id =?, completion_amount = ?, bb_revenue = ?, bb_expenses = ?, viewer = ?, contributor = ?, admin = ? WHERE id = ?");
     $stmt->bind_param("sssssssssiiisssi", $post["name"], $post["status"], $post["hosting"], $post["github_url"], $post["drive_url"], $post['project_url'], $post['project_login_url'], date("Y-m-d H:i:s"), $post["pandle_id"], $post["completion_amount"], $post["bb_revenue"], $post["bb_expenses"], $post["viewer"], $post["contributor"], $post["admin"], $post["id"]);
     $stmt->execute();
     $stmt->close();
 
-    return $res->withJson(selectProjectById($conn, $post["id"]));
+    // Fetch the project by id from the database
+    $response = selectProjectById($conn, $post["id"]);
+
+    return $res->withJson($response);
 });
 
 $app->post('/projects/lists', function (Request $req, Response $res) use ($conn) {
