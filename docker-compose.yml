@@ -1,19 +1,120 @@
 # --------------------------------------------------------------- #
-# Volker PHP project                                              #
+# Volker PHP web project                                          #
 # --------------------------------------------------------------- #
 version: "3"
 
+networks:
+  traefik-network:
+    external: true
+  internal:
+    external: false
+
+volumes:
+  qa:
+    name: bos-api-qa
+  sync-volume: {}
+  mariadb-105-volume:
+    labels:
+      - volker.preserve=true
+  mariadb-105-testing-volume:
+    labels:
+      - volker.preserve=true
+
 services:
   
+  sync:
+    image: rareloop/volker:sync
+    volumes:
+        - sync-volume:/data
+        - .:/host_data
+    networks:
+        - internal
+  
   app:
-    environment:
-        COMPOSER_BRANCH: 2
-        VOLKER_PROJECT_TYPE: php
     image: rareloop/volker:php-74
+    environment:
+        COMPOSER_BRANCH:  2
+        VOLKER_PROJECT_TYPE: laravel
+        EXPERIMENTAL_SYNC_ENABLED: 1
     tty: true
     working_dir: /var/www
     volumes:
-        # Mounts your ssh directory so you can use your existing ssh key inside the container
+        # Mounts your ssh directory so can checkout rareloop
         - ~/.ssh:/home/www/.ssh:delegated
-        # Using direct docker mounts
-        - ./:/var/www:delegated
+        # Experimental file syncing
+        - sync-volume:/var/www
+        # QA permanent volume
+        - qa:/qa
+    expose:
+        - 9000
+    networks:
+        - internal
+    extra_hosts:
+        - bos-api.volker.test:${HOST_IP} 
+
+  
+  nginx:
+    image: rareloop/volker:nginx
+    environment:
+      DOCUMENT_ROOT: What is the document root for your project?
+      APP_URL: bos-api.volker.test
+      SHARED_URL: # placeholder for when sharing with NGROK
+      VOLKER_PROJECT_TYPE: laravel
+      CORS_ENABLED: 0
+      EXPERIMENTAL_SYNC_ENABLED: 1
+    tty: true
+    volumes:
+        # Experimental file syncing
+        - sync-volume:/var/www
+    expose:
+      - 80
+    networks:
+      - internal
+      - traefik-network
+    # Ensure the app container is up before nginx is started
+    depends_on:
+      - app
+    # Configure with traefik to serve on a domain name
+    labels:
+      - traefik.enable=true
+      - traefik.docker.network=traefik-network
+      - traefik.http.routers.bos-api-router.rule=Host(`bos-api.volker.test`)
+
+  
+  database:
+    image: mariadb:10.5
+    networks:
+        - internal
+    ports:
+        - 3306
+    volumes:
+        - mariadb-105-volume:/var/lib/mysql
+    environment:
+        MYSQL_DATABASE: 'bos-api'
+        MYSQL_ALLOW_EMPTY_PASSWORD: 'true'
+        MYSQL_ROOT_PASSWORD:
+        MYSQL_ROOT_HOST: '%'
+
+  testing-database:
+    image: mariadb:10.5
+    networks:
+        - internal
+    ports:
+        - 3306
+    volumes:
+        - mariadb-105-testing-volume:/var/lib/mysql
+    environment:
+        MYSQL_DATABASE: 'testing'
+        MYSQL_ALLOW_EMPTY_PASSWORD: 'true'
+        MYSQL_ROOT_PASSWORD:
+        MYSQL_ROOT_HOST: '%'
+
+  
+  
+  
+  
+  
+  
+  
+  
+
