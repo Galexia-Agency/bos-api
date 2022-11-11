@@ -106,28 +106,49 @@ $app->put('/clients', function (Request $req, Response $res) use($conn) {
     return $res->withJson($clients);
 });
 
-$app->post('/clients', function (Request $req, Response $res) use($conn) {
-    $post = $req->getParsedBody();
-    $stmt = $conn->prepare("UPDATE clients SET business_name = ?, business_shortname = ?, about = ?, address = ?, source = ?, updated_at = ?, pandle_id = ?, billing_email = ? WHERE id = ?");
-    $stmt->bind_param("ssssssssi", $post["business_name"], $post["business_shortname"], $post['about'], $post["address"], $post["source"], date("Y-m-d H:i:s"), $post["pandle_id"], $post["billing_email"], $post["id"]);
-    $stmt->execute();
-    $stmt->close();
-
+function selectClientById ($conn, $id) {
     $stmt = $conn->prepare("SELECT * FROM clients WHERE id = ?");
-    $stmt->bind_param("i", $post["id"]);
+    $stmt->bind_param("i", $id);
     $stmt->execute();
     $result = $stmt->get_result();
 
     $response = array();
 
-    while($row = $result->fetch_assoc()) {
-        if($row) {
+    while ($row = $result->fetch_assoc()) {
+        if ($row) {
             $response[] = $row;
         }
-        else {
+    };
+    if (empty($response)) {
+        return null;
+    }
+    return $response;
+}
+
+$app->post('/clients', function (Request $req, Response $res) use($conn) {
+    $post = $req->getParsedBody();
+
+    // Fetch the project by id from the database
+    $response = selectClientById($conn, $post["id"]);
+
+    // If we're forcing the change then skip the check for updated content
+    if (!$post["force"] && $post["updated_at"]) {
+        if ($response) {
+            if ($post["updated_at"] < $response[0]['updated_at']) {
+                return $res->withStatus(429)->withJson($response);
+            }
+        } else {
             return $res->withJson(null);
         }
-    };
+    }
+
+    $stmt = $conn->prepare("UPDATE clients SET business_name = ?, business_shortname = ?, about = ?, address = ?, source = ?, updated_at = ?, pandle_id = ?, billing_email = ? WHERE id = ?");
+    $stmt->bind_param("ssssssssi", $post["business_name"], $post["business_shortname"], $post['about'], $post["address"], $post["source"], date("Y-m-d H:i:s"), $post["pandle_id"], $post["billing_email"], $post["id"]);
+    $stmt->execute();
+    $stmt->close();
+
+    // Fetch the project by id from the database
+    $response = selectClientById($conn, $post["id"]);
 
     return $res->withJson($response);
 });
