@@ -25,8 +25,8 @@ function selectProjectById ($conn, $id) {
 
 $app->put('/projects', function (Request $req, Response $res) use ($conn) {
     $post = $req->getParsedBody();
-    $stmt = $conn->prepare("INSERT into projects (client_id, name, status, hosting, github_url, drive_url, project_url, project_login_url, created_at, updated_at, pandle_id, completion_amount, bb_revenue, bb_expenses, viewer, contributor, admin) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
-    $stmt->bind_param("issssssssssiiisss", $post["client_id"], $post["name"], $post["status"], $post["hosting"], $post["github_url"], $post["drive_url"], $post['project_url'], $post['project_login_url'], date("Y-m-d H:i:s"), date("Y-m-d H:i:s"), $post["pandle_id"], $post["completion_amount"], $post["bb_revenue"], $post["bb_expenses"], $post["viewer"], $post["contributor"], $post["admin"]);
+    $stmt = $conn->prepare("INSERT into projects (client_id, name, status, hosting, github_url, drive_url, project_url, project_login_url, created_at, updated_at, pandle_id, completion_amount, bb_revenue, bb_expenses, viewer, contributor, admin) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+    $stmt->bind_param("issssssssssiiissssss", $post["client_id"], $post["name"], $post["status"], $post["hosting"], $post["github_url"], $post["drive_url"], $post['project_url'], $post['project_login_url'], date("Y-m-d H:i:s"), date("Y-m-d H:i:s"), $post["pandle_id"], $post["completion_amount"], $post["bb_revenue"], $post["bb_expenses"], $post["viewer"], $post["contributor"], $post["admin"], $post["enquiry_date"], $post["start_date"], $post["completion_date"]);
     $stmt->execute();
     $stmt->close();
 
@@ -63,8 +63,8 @@ $app->post('/projects', function (Request $req, Response $res) use ($conn) {
         }
     }
 
-    $stmt = $conn->prepare("UPDATE projects SET name = ?, status = ?, hosting = ?, github_url = ?, drive_url = ?, project_url = ?, project_login_url = ?, updated_at = ?, pandle_id =?, completion_amount = ?, bb_revenue = ?, bb_expenses = ?, viewer = ?, contributor = ?, admin = ? WHERE id = ?");
-    $stmt->bind_param("sssssssssiiisssi", $post["name"], $post["status"], $post["hosting"], $post["github_url"], $post["drive_url"], $post['project_url'], $post['project_login_url'], date("Y-m-d H:i:s"), $post["pandle_id"], $post["completion_amount"], $post["bb_revenue"], $post["bb_expenses"], $post["viewer"], $post["contributor"], $post["admin"], $post["id"]);
+    $stmt = $conn->prepare("UPDATE projects SET name = ?, status = ?, hosting = ?, github_url = ?, drive_url = ?, project_url = ?, project_login_url = ?, updated_at = ?, pandle_id =?, completion_amount = ?, bb_revenue = ?, bb_expenses = ?, viewer = ?, contributor = ?, admin = ?, enquiry_date = ?, start_date = ?, completion_date = ? WHERE id = ?");
+    $stmt->bind_param("sssssssssiiissssssi", $post["name"], $post["status"], $post["hosting"], $post["github_url"], $post["drive_url"], $post['project_url'], $post['project_login_url'], date("Y-m-d H:i:s"), $post["pandle_id"], $post["completion_amount"], $post["bb_revenue"], $post["bb_expenses"], $post["viewer"], $post["contributor"], $post["admin"], $post["enquiry_date"], $post["start_date"], $post["completion_date"], $post["id"]);
     $stmt->execute();
     $stmt->close();
 
