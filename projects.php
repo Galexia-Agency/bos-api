@@ -4,7 +4,8 @@
 use Psr\Http\Message\ResponseInterface as Response;
 use Psr\Http\Message\ServerRequestInterface as Request;
 
-function selectProjectById ($conn, $id) {
+function selectProjectById($conn, $id)
+{
     $stmt = $conn->prepare("SELECT * FROM projects WHERE id = ?");
     $stmt->bind_param("i", $id);
     $stmt->execute();
@@ -103,7 +104,7 @@ $app->post('/projects/lists', function (Request $req, Response $res) use ($conn)
 });
 
 $app->get('/projects/sse', function (Request $req, Response $res) use ($conn) {
-    // If this isn't the first request, return a response after 25 seconds
+    // If this isn't the first request, return a response after 10 seconds
     if ($_SERVER['HTTP_LAST_EVENT_ID']) {
         sleep(10);
     }
@@ -113,16 +114,16 @@ $app->get('/projects/sse', function (Request $req, Response $res) use ($conn) {
         return $res->withStatus(400)->withJson("Bad request - missing id parameter");
     }
 
-  // Fetch the data
-  $response = selectProjectById($conn, $_GET['id']);
+    // Fetch the data
+    $response = selectProjectById($conn, $_GET['id']);
 
-  // Write the data
-  return $res
-    ->withHeader('Content-Type', 'text/event-stream')
-    ->withHeader('Cache-Control', 'no-cache')
-    ->withHeader('Connection', 'keep-alive')
-    ->withHeader('X-Accel-Buffering', 'no')
-    ->write("event: " . $response[0]['id'] . "\n")
-    ->write("id: " . $response[0]['updated_at'] . "\n")
-    ->write("data: " . json_encode($response) . "\n\n");
+    // Write the data
+    return $res
+        ->withHeader('Content-Type', 'text/event-stream')
+        ->withHeader('Cache-Control', 'no-cache')
+        ->withHeader('Connection', 'keep-alive')
+        ->withHeader('X-Accel-Buffering', 'no')
+        ->write("event: " . $response[0]['id'] . "\n")
+        ->write("id: " . $response[0]['updated_at'] . "\n")
+        ->write("data: " . json_encode($response) . "\n\n");
 });
