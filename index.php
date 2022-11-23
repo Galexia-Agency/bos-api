@@ -260,12 +260,28 @@ $app->get('/get', function (Request $req, Response $res, array $args) use($conn)
     };
     $stmt->close();
 
+    /* Pandle Dashboard */
+    $stmt = $conn->prepare("SELECT * FROM pandleDashboard");
+    $stmt->execute();
+    $result = $stmt->get_result();
+    $pandleDashboard = array();
+    while($row = $result->fetch_assoc()) {
+        if($row) {
+            $pandleDashboard[] = $row;
+        }
+        else {
+            return $res->withJson(null);
+        }
+    };
+    $stmt->close();
+
     $response = array();
     $response[0] = $clients;
     $response[1] = $contacts;
     $response[2] = $domains;
     $response[3] = $projects;
     $response[4] = $products;
+    $response[5] = $pandleDashboard;
 
     return $res->withJson($response);
 });
@@ -279,5 +295,7 @@ require_once('contacts.php');
 require_once('domains.php');
 
 require_once('products.php');
+
+require_once('pandle.php');
 
 $app->run();
