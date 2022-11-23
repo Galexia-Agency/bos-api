@@ -215,6 +215,7 @@ $app->get('/get', function (Request $req, Response $res, array $args) use($conn)
     };
     $stmt->close();
 
+    /* Contacts */
     $stmt = $conn->prepare("SELECT * FROM contacts WHERE client_id IN ($client_ids_to_search)");
     $stmt->execute();
     $result = $stmt->get_result();
@@ -229,6 +230,7 @@ $app->get('/get', function (Request $req, Response $res, array $args) use($conn)
     };
     $stmt->close();
 
+    /* Domains */
     $stmt = $conn->prepare("SELECT * FROM domains WHERE project_id IN ($project_ids_to_search)");
     $stmt->execute();
     $result = $stmt->get_result();
@@ -243,21 +245,39 @@ $app->get('/get', function (Request $req, Response $res, array $args) use($conn)
     };
     $stmt->close();
 
+    /* Products */
+    $stmt = $conn->prepare("SELECT * FROM products");
+    $stmt->execute();
+    $result = $stmt->get_result();
+    $products = array();
+    while($row = $result->fetch_assoc()) {
+        if($row) {
+            $products[] = $row;
+        }
+        else {
+            return $res->withJson(null);
+        }
+    };
+    $stmt->close();
+
     $response = array();
     $response[0] = $clients;
     $response[1] = $contacts;
     $response[2] = $domains;
     $response[3] = $projects;
+    $response[4] = $products;
 
     return $res->withJson($response);
 });
 
-require('projects.php');
+require_once('projects.php');
 
-require('clients.php');
+require_once('clients.php');
 
-require('contacts.php');
+require_once('contacts.php');
 
-require('domains.php');
+require_once('domains.php');
+
+require_once('products.php');
 
 $app->run();
