@@ -94,7 +94,7 @@ $app->post('/contacts', function (Request $req, Response $res) use($conn) {
     global $people;
     $post = $req->getParsedBody();
 
-    // Fetch the project by id from the database
+    // Fetch the contact by id from the database
     $response = selectContactById($conn, $post["id"]);
 
     // If we're forcing the change then skip the check for updated content
