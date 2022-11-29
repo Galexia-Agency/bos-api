@@ -58,8 +58,12 @@
       $income = 0;
 
       foreach ($income_transactions['data'] as $a) {
-        if ($a['attributes']['total-amount']) {
-          $income += $a['attributes']['total-amount'];
+        if ($a['attributes']['total-amount'] && $a['attributes']['type']) {
+          if ($a['attributes']['type'] === 'BankPayment') {
+            $income -= $a['attributes']['total-amount'];
+          } else {
+            $income += $a['attributes']['total-amount'];
+          }
         }
       }
 
@@ -77,8 +81,12 @@
       $expenses = 0;
 
       foreach ($expense_transactions['data'] as $a) {
-        if ($a['attributes']['total-amount']) {
-          $expenses += $a['attributes']['total-amount'];
+        if ($a['attributes']['total-amount'] && $a['attributes']['type']) {
+          if ($a['attributes']['type'] === 'BankPayment') {
+            $expenses -= $a['attributes']['total-amount'];
+          } else {
+            $expenses += $a['attributes']['total-amount'];
+          }
         }
       }
 
