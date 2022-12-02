@@ -23,8 +23,11 @@ require_once __DIR__ . '/vendor/autoload.php';
 $dotenv = Dotenv\Dotenv::createImmutable(__DIR__);
 $dotenv->load();
 $dotenv->required([
-    'CLIENT_ID',
-    'ISSUER',
+    'OKTA_API_KEY',
+    'OKTA_CLIENT_ID',
+    'OKTA_CLIENT_SECRET',
+    'OKTA_DOMAIN',
+    'OKTA_ISSUER',
     'DATABASE_HOST',
     'DATABASE_NAME',
     'DATABASE_USER',
@@ -60,10 +63,10 @@ if ( $authType != 'Bearer' ) {
     exit;
 };
 
-$ISSUER = $_ENV['ISSUER'];
-$CLIENT_ID = $_ENV['CLIENT_ID'];
-$CLIENT_SECRET = $_ENV['CLIENT_SECRET'];
-$ch = curl_init("$ISSUER/default/v1/introspect?token=$authData&token_type_hint=access_token");
+$ISSUER = $_ENV['OKTA_DOMAIN'] . $_ENV['OKTA_ISSUER'];
+$CLIENT_ID = $_ENV['OKTA_CLIENT_ID'];
+$CLIENT_SECRET = $_ENV['OKTA_CLIENT_SECRET'];
+$ch = curl_init("$ISSUER/v1/introspect?token=$authData&token_type_hint=access_token");
 curl_setopt($ch, CURLOPT_POST, 1);
 curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
 curl_setopt($ch, CURLOPT_HTTPHEADER, array(
@@ -92,8 +95,35 @@ if (!$response['active']) {
     return http_response_code( 401 );
     exit();
 }
+curl_close($ch);
 
 $email = $response['username'];
+$uid = $response['uid'];
+
+// Get user groups
+$OKTA_API_KEY = $_ENV['OKTA_API_KEY'];
+$groups_request = curl_init("https://auth.galexia.agency/api/v1/users/$uid/groups");
+curl_setopt($groups_request, CURLOPT_RETURNTRANSFER, true);
+curl_setopt($groups_request, CURLOPT_HEADER, 0);
+curl_setopt($groups_request, CURLOPT_HTTPHEADER, array(
+    "Accept: application/json",
+    "Content-Type: application/json",
+    "Origin: https://api.galexia.agency",
+    "Authorization: SSWS $OKTA_API_KEY"
+));
+
+// execute!
+$groups = json_decode(curl_exec($groups_request), true);
+curl_close($groups_request);
+
+$is_billing = false;
+
+foreach ($groups as $group) {
+    if ($group['profile']['name'] === 'billing') {
+        $is_billing = true;
+        break;
+    }
+}
 
 $db_host = $_ENV['DATABASE_HOST'];
 $db_name = $_ENV['DATABASE_NAME'];
@@ -213,81 +243,92 @@ $app->get('/get', function (Request $req, Response $res, array $args) use($conn)
     // These are the client ids that we want to return to the user, we merge the clients with no projects and the clients with projects the user has access to
     $client_ids_to_search = implode(",",array_merge($project_client_ids, $all_client_ids));
     $project_ids_to_search = implode(",",$project_ids);
-
     $stmt->close();
-    $stmt = $conn->prepare("SELECT * FROM clients WHERE id IN ($client_ids_to_search)");
-    $stmt->execute();
-    $result = $stmt->get_result();
     $clients = array();
-    while($row = $result->fetch_assoc()) {
-        if($row) {
-            $clients[] = $row;
-        }
-        else {
-            return $res->withJson(null);
-        }
-    };
-    $stmt->close();
+    if ($client_ids_to_search) {
+        $stmt = $conn->prepare("SELECT * FROM clients WHERE id IN ($client_ids_to_search)");
+        $stmt->execute();
+        $result = $stmt->get_result();
+        while($row = $result->fetch_assoc()) {
+            if($row) {
+                $clients[] = $row;
+            }
+            else {
+                return $res->withJson(null);
+            }
+        };
+        $stmt->close();
+    }
 
     /* Contacts */
-    $stmt = $conn->prepare("SELECT * FROM contacts WHERE client_id IN ($client_ids_to_search)");
-    $stmt->execute();
-    $result = $stmt->get_result();
     $contacts = array();
-    while($row = $result->fetch_assoc()) {
-        if($row) {
-            $contacts[] = $row;
-        }
-        else {
-            return $res->withJson(null);
-        }
-    };
-    $stmt->close();
+    if ($client_ids_to_search) {
+        $stmt = $conn->prepare("SELECT * FROM contacts WHERE client_id IN ($client_ids_to_search)");
+        $stmt->execute();
+        $result = $stmt->get_result();
+        while($row = $result->fetch_assoc()) {
+            if($row) {
+                $contacts[] = $row;
+            }
+            else {
+                return $res->withJson(null);
+            }
+        };
+        $stmt->close();
+    }
 
     /* Domains */
-    $stmt = $conn->prepare("SELECT * FROM domains WHERE project_id IN ($project_ids_to_search)");
-    $stmt->execute();
-    $result = $stmt->get_result();
     $domains = array();
-    while($row = $result->fetch_assoc()) {
-        if($row) {
-            $domains[] = $row;
-        }
-        else {
-            return $res->withJson(null);
-        }
-    };
-    $stmt->close();
+    if ($project_ids_to_search) {
+        $stmt = $conn->prepare("SELECT * FROM domains WHERE project_id IN ($project_ids_to_search)");
+        $stmt->execute();
+        $result = $stmt->get_result();
+        while($row = $result->fetch_assoc()) {
+            if($row) {
+                $domains[] = $row;
+            }
+            else {
+                return $res->withJson(null);
+            }
+        };
+        $stmt->close();
+    }
+
+    global $is_billing;
 
     /* Products */
-    $stmt = $conn->prepare("SELECT * FROM products");
-    $stmt->execute();
-    $result = $stmt->get_result();
     $products = array();
-    while($row = $result->fetch_assoc()) {
-        if($row) {
-            $products[] = $row;
-        }
-        else {
-            return $res->withJson(null);
-        }
-    };
-    $stmt->close();
+    if ($is_billing) {
+        $stmt = $conn->prepare("SELECT * FROM products");
+        $stmt->execute();
+        $result = $stmt->get_result();
+        while($row = $result->fetch_assoc()) {
+            if($row) {
+                $products[] = $row;
+            }
+            else {
+                return $res->withJson(null);
+            }
+        };
+        $stmt->close();
+    }
 
     /* Pandle Dashboard */
-    $stmt = $conn->prepare("SELECT * FROM pandleDashboard");
-    $stmt->execute();
-    $result = $stmt->get_result();
     $pandleDashboard = array();
-    while($row = $result->fetch_assoc()) {
-        if($row) {
-            $pandleDashboard[] = $row;
-        }
-        else {
-            return $res->withJson(null);
-        }
-    };
-    $stmt->close();
+    if ($is_billing) {
+        $stmt = $conn->prepare("SELECT * FROM pandleDashboard");
+        $stmt->execute();
+        $result = $stmt->get_result();
+        while($row = $result->fetch_assoc()) {
+            if($row) {
+                $pandleDashboard[] = $row;
+            }
+            else {
+                return $res->withJson(null);
+            }
+        };
+        $stmt->close();
+    }
 
     $response = array();
     $response[0] = $clients;
