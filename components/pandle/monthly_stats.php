@@ -106,17 +106,17 @@
 
       // Fix incorrect wages adjustments
       if (
-        $date_start === '2021/04/02' ||
-        $date_start === '2021/05/02' ||
-        $date_start === '2021/06/02' ||
-        $date_start === '2021/07/02' ||
-        $date_start === '2021/08/02' ||
-        $date_start === '2021/09/02'
+        $date_start === '2021/04/01' ||
+        $date_start === '2021/05/01' ||
+        $date_start === '2021/06/01' ||
+        $date_start === '2021/07/01' ||
+        $date_start === '2021/08/01' ||
+        $date_start === '2021/09/01'
       ) {
         $expenses -= 736.66;
         $profit_loss += 736.66;
       }
-      if ($date_start === '2021/09/02') {
+      if ($date_start === '2021/09/01') {
         $expenses += 4419.96;
         $profit_loss -= 4419.96;
       }
