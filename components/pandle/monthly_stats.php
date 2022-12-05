@@ -62,8 +62,13 @@
   $period = new DatePeriod($start, $interval, $end);
 
   foreach ($period as $dt) {
-    $date_start = $dt->format('Y/m/d');
-    $date_end = $dt->add(new DateInterval("P1M"))->sub(new DateInterval("P1D"))->format('Y/m/d');
+    if ($dt == $start) {
+      $date_start = $dt->format('Y/m/d');
+      $date_end = $dt->add(new DateInterval("P1M"))->sub(new DateInterval("P2D"))->format('Y/m/d');
+    } else {
+      $date_start = $dt->sub(new DateInterval("P1D"))->format('Y/m/d');
+      $date_end = $dt->add(new DateInterval("P1M"))->sub(new DateInterval("P1D"))->format('Y/m/d');
+    }
 
     $existingMonth = selectPandledashboardByMonth($conn, $date_start);
 
@@ -122,7 +127,7 @@
         $stmt->execute();
         $stmt->close();
       } else {
-        $stmt = $conn->prepare("INSERT into pandleDashboard (month, sales, expenses profit_loss, cash_flow, updated_at) VALUES (?, ?, ?, ?, ?)");
+        $stmt = $conn->prepare("INSERT into pandleDashboard (month, sales, expenses, profit_loss, cash_flow, updated_at) VALUES (?, ?, ?, ?, ?, ?)");
         $stmt->bind_param("ssssss", $date_start, $sales, $expenses, $profit_loss, $cash_flow, date("Y-m-d H:i:s"));
         $stmt->execute();
         $stmt->close();
