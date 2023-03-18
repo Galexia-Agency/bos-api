@@ -100,28 +100,33 @@ curl_close($ch);
 $email = $response['username'];
 $uid = $response['uid'];
 
-// Get user groups
-$OKTA_API_KEY = $_ENV['OKTA_API_KEY'];
-$groups_request = curl_init("https://auth.galexia.agency/api/v1/users/$uid/groups");
-curl_setopt($groups_request, CURLOPT_RETURNTRANSFER, true);
-curl_setopt($groups_request, CURLOPT_HEADER, 0);
-curl_setopt($groups_request, CURLOPT_HTTPHEADER, array(
-    "Accept: application/json",
-    "Content-Type: application/json",
-    "Origin: https://api.galexia.agency",
-    "Authorization: SSWS $OKTA_API_KEY"
-));
+// If we're SSE then we can skip this step
+if (!$_SERVER['HTTP_LAST_EVENT_ID']) {
+    // Get user groups
+    $OKTA_API_KEY = $_ENV['OKTA_API_KEY'];
+    $groups_request = curl_init("https://auth.galexia.agency/api/v1/users/$uid/groups");
+    curl_setopt($groups_request, CURLOPT_RETURNTRANSFER, true);
+    curl_setopt($groups_request, CURLOPT_HEADER, 0);
+    curl_setopt($groups_request, CURLOPT_HTTPHEADER, array(
+        "Accept: application/json",
+        "Content-Type: application/json",
+        "Origin: https://api.galexia.agency",
+        "Authorization: SSWS $OKTA_API_KEY"
+    ));
 
-// execute!
-$groups = json_decode(curl_exec($groups_request), true);
-curl_close($groups_request);
+    // execute!
+    $groups = json_decode(curl_exec($groups_request), true);
+    curl_close($groups_request);
+}
 
 $is_billing = false;
 
-foreach ($groups as $group) {
-    if ($group['profile']['name'] === 'billing') {
-        $is_billing = true;
-        break;
+if ($groups) {
+    foreach ($groups as $group) {
+        if ($group['profile']['name'] === 'billing') {
+            $is_billing = true;
+            break;
+        }
     }
 }
 
