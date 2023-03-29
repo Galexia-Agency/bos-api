@@ -90,8 +90,8 @@
         }
       }
 
-      $stmt = $conn->prepare("UPDATE projects SET pandle_income = ?, pandle_expenses = ?, updated_at = ? WHERE pandle_id = ?");
-      $stmt->bind_param("ssss", $income, $expenses, date("Y-m-d H:i:s"), $pandle_id);
+      $stmt = $conn->prepare("UPDATE projects SET pandle_income_transactions = ?, pandle_income = ?, pandle_expenses_transactions = ?, pandle_expenses = ?, updated_at = ? WHERE pandle_id = ?");
+      $stmt->bind_param("ssssss", json_encode($income_transactions['data']), $income, json_encode($expense_transactions['data']), $expenses, date("Y-m-d H:i:s"), $pandle_id);
       $stmt->execute();
       $stmt->close();
     }
