@@ -34,5 +34,15 @@
         $e = $e + 1;
     }
 
+    if ($post["address"]) {
+        $address = json_decode($post["address"]);
+        $contact->addresses[0]->type = 'work';
+        $contact->addresses[0]->streetAddress = $address->line1;
+        $contact->addresses[0]->extendedAddress = $address->line2 . ' ' . $address->line3;
+        $contact->addresses[0]->city = $address->town;
+        $contact->addresses[0]->postalCode = $address->postcode;
+        $contact->addresses[0]->country = $address->country;
+    }
+
     $contact->save();
 ?>
