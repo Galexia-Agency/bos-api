@@ -1,23 +1,4 @@
 <?php
-if ($_SERVER['HTTP_ORIGIN']) {
-    header("Access-Control-Allow-Origin: {$_SERVER['HTTP_ORIGIN']}");
-} else {
-    header("Access-Control-Allow-Origin: *");
-}
-header("Access-Control-Allow-Methods: GET, POST, OPTIONS, PUT, DELETE");
-header("Access-Control-Allow-Headers: Authorization, Origin, X-Requested-With, Content-Type, Accept, access-token, client, uid, Cache-Control, last-event-id");
-header("Content-Type: application/json; charset=UTF-8");
-header("X-Frame-Options: DENY");
-header("Strict-Transport-Security: max-age=15552000; preload");
-header("Content-Security-Policy: default-src 'self'");
-header("Referrer-Policy: no-referrer");
-header("X-Content-Type-Options: nosniff");
-
-ini_set('display_errors', 1);
-ini_set('display_startup_errors', 1);
-error_reporting(E_ERROR | E_PARSE);
-date_default_timezone_set('UTC');
-
 require_once __DIR__ . '/vendor/autoload.php';
 
 $dotenv = Dotenv\Dotenv::createImmutable(__DIR__);
@@ -38,8 +19,34 @@ $dotenv->required([
     'PANDLE_USERNAME',
     'PANDLE_PASSWORD',
     'PANDLE_COMPANY_ID',
-    'PANDLE_COMPANY_INCORPORATION'
+    'PANDLE_COMPANY_INCORPORATION',
+    'ALLOWED_ORIGINS'
 ])->notEmpty();
+
+$allowedOrigins = explode(',', getenv('ALLOWED_ORIGINS'));
+
+$origin = isset($_SERVER['HTTP_ORIGIN']) ? $_SERVER['HTTP_ORIGIN'] : '';
+
+if (in_array($origin, $allowedOrigins)) {
+    header("Access-Control-Allow-Origin: " . $origin);
+} else {
+    // Handle unauthorized origin here
+    header("HTTP/1.1 403 Forbidden");
+    exit;
+}
+header("Access-Control-Allow-Methods: GET, POST, OPTIONS, PUT, DELETE");
+header("Access-Control-Allow-Headers: Authorization, Origin, X-Requested-With, Content-Type, Accept, access-token, client, uid, Cache-Control, last-event-id");
+header("Content-Type: application/json; charset=UTF-8");
+header("X-Frame-Options: DENY");
+header("Strict-Transport-Security: max-age=15552000; preload");
+header("Content-Security-Policy: default-src 'self'");
+header("Referrer-Policy: no-referrer");
+header("X-Content-Type-Options: nosniff");
+
+ini_set('display_errors', 1);
+ini_set('display_startup_errors', 1);
+error_reporting(E_ERROR | E_PARSE);
+date_default_timezone_set('UTC');
 
 // Don't do anything for prefetch requests.
 if ( $_SERVER['REQUEST_METHOD'] === 'OPTIONS' ) {
