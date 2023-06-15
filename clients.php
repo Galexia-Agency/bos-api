@@ -142,8 +142,8 @@ $app->post('/clients', function (Request $req, Response $res) use($conn) {
         }
     }
 
-    $stmt = $conn->prepare("UPDATE clients SET business_name = ?, business_shortname = ?, about = ?, address = ?, source = ?, updated_at = ?, pandle_id = ?, billing_email = ? WHERE id = ?");
-    $stmt->bind_param("ssssssssi", $post["business_name"], $post["business_shortname"], $post['about'], $post["address"], $post["source"], date("Y-m-d H:i:s"), $post["pandle_id"], $post["billing_email"], $post["id"]);
+    $stmt = $conn->prepare("UPDATE clients SET business_name = ?, business_shortname = ?, about = ?, address = ?, source = ?, updated_at = ?, pandle_id = ?, billing_email = ?, projects = ? WHERE id = ?");
+    $stmt->bind_param("sssssssssi", $post["business_name"], $post["business_shortname"], $post['about'], $post["address"], $post["source"], date("Y-m-d H:i:s"), $post["pandle_id"], $post["billing_email"], $post['projects'], $post["id"]);
     $stmt->execute();
     $stmt->close();
 
