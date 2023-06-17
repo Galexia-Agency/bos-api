@@ -51,14 +51,12 @@ date_default_timezone_set('UTC');
 // Don't do anything for prefetch requests.
 if ( $_SERVER['REQUEST_METHOD'] === 'OPTIONS' ) {
     return http_response_code( 200 );
-    exit;
 };
 
 // Make sure the authorization header is available, if not return 401.
 if (!isset( $_SERVER['HTTP_AUTHORIZATION'] ) ) {
     echo "no authorization";
     return http_response_code( 401 );
-    exit;
 } else {
     list( $authType, $authData ) = explode( " ", $_SERVER['HTTP_AUTHORIZATION'], 2 );
 };
@@ -67,7 +65,6 @@ if (!isset( $_SERVER['HTTP_AUTHORIZATION'] ) ) {
 if ( $authType != 'Bearer' ) {
     echo "not bearer";
     return http_response_code( 401 );
-    exit;
 };
 
 $ISSUER = $_ENV['OKTA_DOMAIN'] . $_ENV['OKTA_ISSUER'];
@@ -96,11 +93,9 @@ if (!curl_errno($ch)) {
     }
 } else {
     return http_response_code( 500 );
-    exit();
 }
 if (!$response['active']) {
     return http_response_code( 401 );
-    exit();
 }
 curl_close($ch);
 

@@ -34,12 +34,9 @@
             print_r(file_get_contents($mysqlExportPath));
             unlink($mysqlExportPath);
             return;
-            break;
         case 1:
             return http_response_code( 500 );
-            break;
         case 2:
             return http_response_code( 500 );
-            break;
     }
 ?>
