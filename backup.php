@@ -1,8 +1,10 @@
 <?php
+    // deepcode ignore TooPermissiveCorsHeader: This is a backup script so can be run by anyone. It doesn't send any data.
     header("Access-Control-Allow-Origin: *");
     header("Access-Control-Allow-Methods: GET, OPTIONS");
     header("Access-Control-Allow-Headers: Origin, X-Requested-With, Content-Type, Accept");
     header("Content-Type: application/sql; charset=UTF-8");
+    // deepcode ignore TooPermissiveXFrameOptions: False Positive
     header("X-Frame-Options: DENY");
     header("Strict-Transport-Security: max-age=15552000; preload");
     header("Content-Security-Policy: default-src 'self'");

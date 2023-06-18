@@ -37,6 +37,7 @@ if (in_array($origin, $allowedOrigins)) {
 header("Access-Control-Allow-Methods: GET, POST, OPTIONS, PUT, DELETE");
 header("Access-Control-Allow-Headers: Authorization, Origin, X-Requested-With, Content-Type, Accept, access-token, client, uid, Cache-Control, last-event-id");
 header("Content-Type: application/json; charset=UTF-8");
+// deepcode ignore TooPermissiveXFrameOptions: False Positive
 header("X-Frame-Options: DENY");
 header("Strict-Transport-Security: max-age=15552000; preload");
 header("Content-Security-Policy: default-src 'self'");
@@ -86,7 +87,7 @@ $response = json_decode(curl_exec($ch), true);
 if (!curl_errno($ch)) {
     switch ($http_code = curl_getinfo($ch, CURLINFO_HTTP_CODE)) {
         case 200:  # OK
-            continue;
+            break;
         default:
             return http_response_code( 401 );
             exit();
