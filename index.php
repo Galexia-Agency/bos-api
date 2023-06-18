@@ -72,7 +72,20 @@ require_once('redis.php');
 
 $queryString = $_SERVER['QUERY_STRING'];
 
-if (!($_SERVER['REQUEST_URI'] === '/projects/sse?' . $queryString) || !checkAndDeleteValueInRedis($queryString)) {
+$lastEventId = $_SERVER['HTTP_LAST_EVENT_ID'];
+
+$canBypassAuth = false;
+
+// If request is sse and we have a last event id
+if (($_SERVER['REQUEST_URI'] === '/projects/sse?' . $queryString) && $lastEventId) {
+    // Check if we have the id in redis, thus set the canBypassAuth to true
+    $canBypassAuth = checkAndDeleteValueInRedis($lastEventId);
+}
+
+// Add header to indicate whether we bypassed auth or not - this makes it easier to debug
+header("SSE-Bypass-Auth: " . strval($canBypassAuth));
+
+if (!$canBypassAuth) {
     $ISSUER = $_ENV['OKTA_DOMAIN'] . $_ENV['OKTA_ISSUER'];
     $CLIENT_ID = $_ENV['OKTA_CLIENT_ID'];
     $CLIENT_SECRET = $_ENV['OKTA_CLIENT_SECRET'];

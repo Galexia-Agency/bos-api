@@ -121,6 +121,9 @@ $app->get('/projects/sse', function (Request $req, Response $res) use ($conn) {
     // Generate uuid for last event id so we can store in redis and check against on the next request to bypass authentication
     $uuid = Uuid::uuid1()->toString();
 
+    // Store the uuid as the key, with a ttl of 15s, and a value of true
+    setValueInRedis($uuid, 15, true);
+
     // Write the data
     return $res
         ->withHeader('Content-Type', 'text/event-stream')

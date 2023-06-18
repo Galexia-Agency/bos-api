@@ -12,10 +12,10 @@ register_shutdown_function(function () use ($redis) {
   $redis->close();
 });
 
-function setValueInRedis($key, $value)
+function setValueInRedis($key, $ttl, $value)
 {
   global $redis;
-  $redis->set($key, $value);
+  $redis->setex($key, $ttl, $value);
 }
 
 function checkAndDeleteValueInRedis($key)
