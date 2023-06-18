@@ -68,43 +68,61 @@ if ( $authType != 'Bearer' ) {
     return http_response_code( 401 );
 };
 
-$ISSUER = $_ENV['OKTA_DOMAIN'] . $_ENV['OKTA_ISSUER'];
-$CLIENT_ID = $_ENV['OKTA_CLIENT_ID'];
-$CLIENT_SECRET = $_ENV['OKTA_CLIENT_SECRET'];
-$ch = curl_init("$ISSUER/v1/introspect?token=$authData&token_type_hint=access_token");
-curl_setopt($ch, CURLOPT_POST, 1);
-curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-curl_setopt($ch, CURLOPT_HTTPHEADER, array(
-    "Accept: application/json",
-    "Content-Type: application/x-www-form-urlencoded",
-    "Origin: https://api.galexia.agency",
-    "Authorization: Basic " . base64_encode("$CLIENT_ID:$CLIENT_SECRET")
-));
+require_once('redis.php');
 
-// execute!
-$response = json_decode(curl_exec($ch), true);
+$queryString = $_SERVER['QUERY_STRING'];
 
-if (!curl_errno($ch)) {
-    switch ($http_code = curl_getinfo($ch, CURLINFO_HTTP_CODE)) {
-        case 200:  # OK
-            break;
-        default:
-            return http_response_code( 401 );
-            exit();
+$lastEventId = $_SERVER['HTTP_LAST_EVENT_ID'];
+
+$canBypassAuth = false;
+
+// If request is sse and we have a last event id
+if (($_SERVER['REQUEST_URI'] === '/projects/sse?' . $queryString) && $lastEventId) {
+    // Check if we have the id in redis, thus set the canBypassAuth to true
+    $canBypassAuth = checkAndDeleteValueInRedis($lastEventId);
+}
+
+// Add header to indicate whether we bypassed auth or not - this makes it easier to debug
+header("SSE-Bypass-Auth: " . strval($canBypassAuth));
+
+if (!$canBypassAuth) {
+    $ISSUER = $_ENV['OKTA_DOMAIN'] . $_ENV['OKTA_ISSUER'];
+    $CLIENT_ID = $_ENV['OKTA_CLIENT_ID'];
+    $CLIENT_SECRET = $_ENV['OKTA_CLIENT_SECRET'];
+    $ch = curl_init("$ISSUER/v1/introspect?token=$authData&token_type_hint=access_token");
+    curl_setopt($ch, CURLOPT_POST, 1);
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+    curl_setopt($ch, CURLOPT_HTTPHEADER, array(
+        "Accept: application/json",
+        "Content-Type: application/x-www-form-urlencoded",
+        "Origin: https://api.galexia.agency",
+        "Authorization: Basic " . base64_encode("$CLIENT_ID:$CLIENT_SECRET")
+    ));
+
+    // execute!
+    $response = json_decode(curl_exec($ch), true);
+
+    if (!curl_errno($ch)) {
+        switch ($http_code = curl_getinfo($ch, CURLINFO_HTTP_CODE)) {
+            case 200:  # OK
+                break;
+            default:
+                return http_response_code( 401 );
+                exit();
+        }
+    } else {
+        return http_response_code( 500 );
     }
-} else {
-    return http_response_code( 500 );
-}
-if (!$response['active']) {
-    return http_response_code( 401 );
-}
-curl_close($ch);
+    if (!$response['active']) {
+        return http_response_code( 401 );
+    }
+    curl_close($ch);
 
-$email = $response['username'];
-$uid = $response['uid'];
-
-// If we're SSE then we can skip this step
-if (!$_SERVER['HTTP_LAST_EVENT_ID']) {
+    $email = $response['username'];
+    $uid = $response['uid'];
+}
+// If we're a generic SSE request, then we don't need this step
+if (!($_SERVER['REQUEST_URI'] === '/projects/sse?' . $queryString)) {
     // Get user groups
     $OKTA_API_KEY = $_ENV['OKTA_API_KEY'];
     $groups_request = curl_init("https://auth.galexia.agency/api/v1/users/$uid/groups");
@@ -120,18 +138,19 @@ if (!$_SERVER['HTTP_LAST_EVENT_ID']) {
     // execute!
     $groups = json_decode(curl_exec($groups_request), true);
     curl_close($groups_request);
-}
 
-$is_billing = false;
+    $is_billing = false;
 
-if ($groups) {
-    foreach ($groups as $group) {
-        if ($group['profile']['name'] === 'billing') {
-            $is_billing = true;
-            break;
+    if ($groups) {
+        foreach ($groups as $group) {
+            if ($group['profile']['name'] === 'billing') {
+                $is_billing = true;
+                break;
+            }
         }
     }
 }
+
 
 $db_host = $_ENV['DATABASE_HOST'];
 $db_name = $_ENV['DATABASE_NAME'];
