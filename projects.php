@@ -3,6 +3,7 @@
 // Import classes from the Psr library (standardised HTTP requests and responses)
 use Psr\Http\Message\ResponseInterface as Response;
 use Psr\Http\Message\ServerRequestInterface as Request;
+use Ramsey\Uuid\Uuid;
 
 function selectProjectById($conn, $id)
 {
@@ -117,6 +118,9 @@ $app->get('/projects/sse', function (Request $req, Response $res) use ($conn) {
     // Fetch the data
     $response = selectProjectById($conn, $_GET['id']);
 
+    // Generate uuid for last event id so we can store in redis and check against on the next request to bypass authentication
+    $uuid = Uuid::uuid1()->toString();
+
     // Write the data
     return $res
         ->withHeader('Content-Type', 'text/event-stream')
@@ -124,6 +128,6 @@ $app->get('/projects/sse', function (Request $req, Response $res) use ($conn) {
         ->withHeader('Connection', 'keep-alive')
         ->withHeader('X-Accel-Buffering', 'no')
         ->write("event: " . $response[0]['id'] . "\n")
-        ->write("id: " . $response[0]['updated_at'] . "\n")
+        ->write("id: " . $uuid . "\n")
         ->write("data: " . json_encode($response) . "\n\n");
 });
