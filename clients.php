@@ -6,8 +6,8 @@ use Psr\Http\Message\ServerRequestInterface as Request;
 
 $app->put('/clients', function (Request $req, Response $res) use($conn) {
     $post = $req->getParsedBody();
-    $stmt = $conn->prepare("INSERT into clients (business_name, business_shortname, about, address, source, created_at, updated_at, pandle_id, billing_email) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)");
-    $stmt->bind_param("sssssssss", $post["business_name"], $post["business_shortname"], $post['about'], $post["address"], $post["source"], date("Y-m-d H:i:s"), date("Y-m-d H:i:s"), $post["pandle_id"], $post["billing_email"],);
+    $stmt = $conn->prepare("INSERT into clients (business_name, business_shortname, about, address_line_1, address_line_2, address_line_3, address_town, address_county, address_postcode, address_country, source, created_at, updated_at, pandle_id, billing_email) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)");
+    $stmt->bind_param("sssssssssssssss", $post["business_name"], $post["business_shortname"], $post['about'], $post["address_line_1"], $post["address_line_2"], $post["address_line_3"], $post["address_town"], $post["address_county"], $post["address_postcode"], $post["address_country"], $post["source"], date("Y-m-d H:i:s"), date("Y-m-d H:i:s"), $post["pandle_id"], $post["billing_email"],);
     $stmt->execute();
     $stmt->close();
 
@@ -142,8 +142,47 @@ $app->post('/clients', function (Request $req, Response $res) use($conn) {
         }
     }
 
-    $stmt = $conn->prepare("UPDATE clients SET business_name = ?, business_shortname = ?, about = ?, address = ?, source = ?, updated_at = ?, pandle_id = ?, billing_email = ?, projects = ? WHERE id = ?");
-    $stmt->bind_param("sssssssssi", $post["business_name"], $post["business_shortname"], $post['about'], $post["address"], $post["source"], date("Y-m-d H:i:s"), $post["pandle_id"], $post["billing_email"], $post['projects'], $post["id"]);
+    $stmt = $conn->prepare("
+        UPDATE clients
+        SET
+            business_name = ?,
+            business_shortname = ?,
+            about = ?,
+            address = ?,
+            address_line_1 = ?,
+            address_line_2 = ?,
+            address_line_3 = ?,
+            address_town = ?,
+            address_county = ?,
+            address_postcode = ?,
+            address_country = ?,
+            source = ?,
+            updated_at = ?,
+            pandle_id = ?,
+            billing_email = ?
+        WHERE id = ?
+    ");
+    $stmt->bind_param(
+        "sssssssssssssssi",
+        $post["business_name"],
+        $post["business_shortname"],
+        $post['about'],
+        // ToDo
+        // Remove this when migrated
+        $post["address"],
+        $post["address_line_1"],
+        $post["address_line_2"],
+        $post["address_line_3"],
+        $post["address_town"],
+        $post["address_county"],
+        $post["address_postcode"],
+        $post["address_country"],
+        $post["source"],
+        date("Y-m-d H:i:s"),
+        $post["pandle_id"],
+        $post["billing_email"],
+        $post["id"]
+    );
     $stmt->execute();
     $stmt->close();
 
