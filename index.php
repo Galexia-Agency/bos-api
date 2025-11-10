@@ -30,7 +30,7 @@ if (in_array($origin, $allowedOrigins)) {
     exit;
 }
 header("Access-Control-Allow-Methods: GET, POST, OPTIONS, PUT, DELETE");
-header("Access-Control-Allow-Headers: Authorization, Origin, X-Requested-With, Content-Type, Accept, access-token, client, uid, Cache-Control, last-event-id");
+header("Access-Control-Allow-Headers: Authorization, Origin, X-Requested-With, Content-Type, Accept, access-token, client, uid, Cache-Control, last-event-id, CF-Access-Jwt-Assertion");
 header("Access-Control-Allow-Credentials: true");
 header("Content-Type: application/json; charset=UTF-8");
 // deepcode ignore TooPermissiveXFrameOptions: False Positive
